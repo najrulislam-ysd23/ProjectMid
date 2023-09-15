@@ -5,6 +5,9 @@ const HTTP_STATUS = require("../constants/statusCodes");
 const { failure, success } = require("../util/common");
 const bcrypt = require("bcrypt");
 const jsonwebtoken = require('jsonwebtoken');
+const transporter = require("../middleware/Transporter");
+
+
 
 class AuthController {
 
@@ -47,6 +50,81 @@ class AuthController {
             return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(failure("Internal server error"));
         }
     }
+
+    // async verifyAccount(req, res) {
+    //     try {
+    //         // Checking if all the properties are valid in the request body
+    //         const validation = validationResult(req).array();
+    //         if (validation.length > 0) {
+    //             return res.status(HTTP_STATUS.UNPROCESSABLE_ENTITY).send(failure("Provide information correctly", validation));
+    //         }
+
+    //         const { name, email, password, confirmPassword, role, age, area, city, country } = req.body;
+
+    //         if (password != confirmPassword) {
+    //             return res.status(HTTP_STATUS.OK).send(failure("Passwords did not match."));
+    //         }
+
+    //         const existingUser = await AuthModel.findOne({ email: email })
+    //         // Checking if the user already has an account
+    //         if (existingUser) {
+    //             if (existingUser.verified) {
+    //                 return res.status(HTTP_STATUS.OK).send(failure("You have an account, please log in to access."));
+    //             } else {
+    //                 await AuthModel.deleteOne({ email: email, verified: false });
+    //                 await UserModel.deleteOne({ email: email });
+    //             }
+    //         }
+    //         // Creating user instance
+    //         const address = { area, city, country };
+    //         const user = new UserModel({ name, email, role, age, address });
+    //         console.log(user, user.address);
+    //         await user
+    //             .save()
+    //             .then((data) => {
+    //                 console.log("Success")
+    //             })
+    //             .catch((err) => {
+    //                 console.log(err);
+    //                 return res.status(HTTP_STATUS.UNPROCESSABLE_ENTITY).send(failure("Failed to signup"));
+    //             });
+
+
+    //         const fetchUser = await UserModel.findOne({ email: email });
+    //         // Fetching user id for the ref in the auth instance
+    //         const fetchUserId = fetchUser._id;
+
+    //         const hashedPassword = await bcrypt.hash(password, 10).then((hash) => {
+    //             return hash;
+    //         });
+    //         // Creating auth instance
+    //         const auth = new AuthModel({ email, password: hashedPassword, role, user: fetchUserId })
+    //         await auth
+    //             .save()
+    //             .then((data) => {
+    //                 // Generate a verification token with the user's ID
+    //                 const verificationToken = data.generateVerificationToken();
+    //                 // Email the user a unique verification link
+    //                 const url = `127.0.0.1:8000/auth/verify/${verificationToken}`
+    //                 transporter.sendMail({
+    //                     to: email,
+    //                     subject: 'Verify Your Account',
+    //                     html: `Click <a href = '${url}'>here</a> to confirm your email.`
+    //                 })
+    //                 return res.status(HTTP_STATUS.CREATED).send(success(`Sent a verification email to ${email}`));
+    //                 // return res.status(HTTP_STATUS.CREATED).send(success("Successfully signed up. Now you can log in."));
+    //             })
+    //             .catch((err) => {
+    //                 console.log(err);
+    //                 return res.status(HTTP_STATUS.UNPROCESSABLE_ENTITY).send(failure("Failed to verify"));
+    //             });
+
+    //     } catch (error) {
+    //         return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(failure("Internal server error"));
+    //     }
+    // }
+
+
     async signup(req, res) {
         try {
             // Checking if all the properties are valid in the request body
@@ -55,7 +133,7 @@ class AuthController {
                 return res.status(HTTP_STATUS.UNPROCESSABLE_ENTITY).send(failure("Provide information correctly", validation));
             }
 
-            const { name, email, password, confirmPassword, role, age, address } = req.body;
+            const { name, email, password, confirmPassword, role, age, area, city, country } = req.body;
 
             if (password != confirmPassword) {
                 return res.status(HTTP_STATUS.OK).send(failure("Passwords did not match."));
@@ -64,10 +142,17 @@ class AuthController {
             const existingUser = await AuthModel.findOne({ email: email })
             // Checking if the user already has an account
             if (existingUser) {
-                return res.status(HTTP_STATUS.OK).send(failure("You have an account, please log in to access."));
+                if (existingUser.verified) {
+                    return res.status(HTTP_STATUS.OK).send(failure("You have an account, please log in to access."));
+                } else {
+                    await AuthModel.deleteOne({ email: email, verified: false });
+                    await UserModel.deleteOne({ email: email });
+                }
             }
             // Creating user instance
+            const address = { area, city, country };
             const user = new UserModel({ name, email, role, age, address });
+            console.log(user, user.address);
             await user
                 .save()
                 .then((data) => {
@@ -77,7 +162,8 @@ class AuthController {
                     console.log(err);
                     return res.status(HTTP_STATUS.UNPROCESSABLE_ENTITY).send(failure("Failed to signup"));
                 });
-            console.log("reached")
+
+
             const fetchUser = await UserModel.findOne({ email: email });
             // Fetching user id for the ref in the auth instance
             const fetchUserId = fetchUser._id;
@@ -90,7 +176,17 @@ class AuthController {
             await auth
                 .save()
                 .then((data) => {
-                    return res.status(HTTP_STATUS.OK).send(success("Successfully signed up. Now you can log in."));
+                    // Generate a verification token with the user's ID
+                    // const verificationToken = data.generateVerificationToken();
+                    // // Email the user a unique verification link
+                    // const url = `127.0.0.1:8000/auth/verify/${verificationToken}`
+                    // transporter.sendMail({
+                    //     to: email,
+                    //     subject: 'Verify Your Account',
+                    //     html: `Click <a href = '${url}'>here</a> to confirm your email.`
+                    // })
+                    // return res.status(HTTP_STATUS.CREATED).send(success(`Sent a verification email to ${email}`));
+                    return res.status(HTTP_STATUS.CREATED).send(success("Successfully signed up. Now you can log in."));
                 })
                 .catch((err) => {
                     console.log(err);

@@ -6,10 +6,9 @@ const authValidation = require("../middleware/Auth");
 
 
 routes.get("/all", authValidation.isAuthorized, authValidation.isAdmin, UserController.getAll);
-routes.get('/user/:id', authValidation.isAuthorized, authValidation.isAdmin, UserController.getById);
-
-// routes.delete('/delete/:id', ProductController.deleteById);
-// routes.patch('/update', ProductValidation.updateValidation, ProductController.updateById);
+routes.get('/user', authValidation.isAuthorized, authValidation.isAdmin, UserController.getOne);
+routes.patch('/user/update', authValidation.isAuthorized, UserController.updateUser);
+routes.delete('/user/delete', authValidation.isAuthorized, authValidation.isAdmin, expressValidation.isValidEmail, UserController.deleteUser);
 
 
 

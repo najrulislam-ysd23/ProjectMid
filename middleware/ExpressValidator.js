@@ -158,6 +158,33 @@ const validator = {
             .bail(),
     ],
 
+    isValidEmail: [
+        body("email")
+            .isEmail()
+            .withMessage("Enter a valid email")
+    ],
+
+    createBook: [
+        body("bookISBN")
+            .isLength({ min: 1 })
+            .trim()
+            .withMessage("Book ISBN must be specified")
+            .bail(),
+        body("bookName")
+            .exists()
+            .withMessage("Book name must be specified")
+            .bail()
+            .isString()
+            .withMessage("Book name have to be a string")
+            .bail()
+            .custom((value, { req, res }) => {
+                console.log(value);
+                if (value.length <= 0) {
+                    throw new Error("Book name cannot be blank");
+                }
+                return true;
+            }),
+    ],
 
 
 
