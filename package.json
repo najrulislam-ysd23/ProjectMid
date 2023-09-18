@@ -25,5 +25,13 @@
     "ignore": [
       "data/*"
     ]
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/najrulislam-ysd23/ProjectMid.git"
+  },
+  "bugs": {
+    "url": "https://github.com/najrulislam-ysd23/ProjectMid/issues"
+  },
+  "homepage": "https://github.com/najrulislam-ysd23/ProjectMid#readme"
 }

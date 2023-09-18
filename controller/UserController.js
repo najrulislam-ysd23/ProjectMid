@@ -3,10 +3,7 @@ const AuthModel = require("../model/Auth");
 const UserModel = require("../model/User");
 const { success, failure } = require("../util/common");
 const HTTP_STATUS = require("../constants/statusCodes");
-const jsonwebtoken = require('jsonwebtoken');
-
-
-
+const jsonwebtoken = require("jsonwebtoken");
 
 class User {
     async getUsers(req, res) {
@@ -131,7 +128,9 @@ class User {
             if (decoded.role == "admin") {
                 const { email } = req.body;
                 if (!email) {
-                    return res.status(HTTP_STATUS.NOT_ACCEPTABLE).send(failure("Provide email of the user to update"));
+                    return res
+                        .status(HTTP_STATUS.NOT_ACCEPTABLE)
+                        .send(failure("Provide email of the user to update"));
                 }
                 let userRequested = await AuthModel.findOne({ email: email });
                 if (!userRequested) {
@@ -140,7 +139,9 @@ class User {
                         .send(success("User does not exist"));
                 }
                 if (name || age || area || city || country) {
-                    return res.status(HTTP_STATUS.UNAUTHORIZED).send(failure("You can only update role or verify an user"));
+                    return res
+                        .status(HTTP_STATUS.UNAUTHORIZED)
+                        .send(failure("You can only update role or verify an user"));
                     // return res.status(HTTP_STATUS.NOT_MODIFIED).send(failure("You can only update role or verify an user"));
                 }
                 if (role) {
@@ -150,7 +151,11 @@ class User {
                     updateObject.verified = verified;
                 }
                 if (!role && !verified) {
-                    return res.status(HTTP_STATUS.NOT_ACCEPTABLE).send(failure("Provide valid property/s to update role or verify user"));
+                    return res
+                        .status(HTTP_STATUS.NOT_ACCEPTABLE)
+                        .send(
+                            failure("Provide valid property/s to update role or verify user")
+                        );
                 }
 
                 // console.log(updateObject);
@@ -161,7 +166,9 @@ class User {
             } else if (decoded.role == "customer") {
                 const { email } = req.body;
                 if (email) {
-                    return res.status(HTTP_STATUS.NOT_ACCEPTABLE).send(failure("Invalid properties"));
+                    return res
+                        .status(HTTP_STATUS.NOT_ACCEPTABLE)
+                        .send(failure("Invalid properties"));
                 }
                 if (!name && !age && !area && !city && !country && !cashIn && !cashOut) {
                     return res.status(HTTP_STATUS.NOT_ACCEPTABLE).send(failure("Provide valid property/s to update"));
@@ -212,12 +219,18 @@ class User {
             }
 
             if (user) {
-                return res.status(HTTP_STATUS.OK).send(success("Successfully updated the user", user));
+                return res
+                    .status(HTTP_STATUS.OK)
+                    .send(success("Successfully updated the user", user));
             } else {
-                return res.status(HTTP_STATUS.NOT_FOUND).send(failure("Failed to update the user"));
+                return res
+                    .status(HTTP_STATUS.NOT_FOUND)
+                    .send(failure("Failed to update the user"));
             }
         } catch (error) {
-            return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(failure("Internal server error while updating user"));
+            return res
+                .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+                .send(failure("Internal server error while updating user"));
         }
     }
 
@@ -234,7 +247,9 @@ class User {
             }
             const { email } = req.body;
             if (!email) {
-                return res.status(HTTP_STATUS.NOT_ACCEPTABLE).send(failure("Provide email of the user to delete"));
+                return res
+                    .status(HTTP_STATUS.NOT_ACCEPTABLE)
+                    .send(failure("Provide email of the user to delete"));
             }
             let userRequested = await AuthModel.findOne({ email: email });
             if (!userRequested) {
@@ -247,16 +262,23 @@ class User {
             if (user) {
                 const auth = await AuthModel.deleteOne({ email: email });
                 if (auth) {
-                    return res.status(HTTP_STATUS.ACCEPTED).send(success("Successfully deleted the user"));
+                    return res
+                        .status(HTTP_STATUS.ACCEPTED)
+                        .send(success("Successfully deleted the user"));
                 } else {
-                    return res.status(HTTP_STATUS.NOT_FOUND).send(failure("Failed to delete the user"));
+                    return res
+                        .status(HTTP_STATUS.NOT_FOUND)
+                        .send(failure("Failed to delete the user"));
                 }
-
             } else {
-                return res.status(HTTP_STATUS.NOT_FOUND).send(failure("Failed to delete the user"));
+                return res
+                    .status(HTTP_STATUS.NOT_FOUND)
+                    .send(failure("Failed to delete the user"));
             }
         } catch (error) {
-            return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(failure("Internal server error while deleting user"));
+            return res
+                .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+                .send(failure("Internal server error while deleting user"));
         }
     }
 
@@ -265,4 +287,3 @@ class User {
 }
 
 module.exports = new User();
-

@@ -293,6 +293,149 @@ const validator = {
             .bail(),
     ],
 
+    getUsersQuery: [
+        query("page").custom((value, { req, res }) => {
+          if (value) {
+            if (isNaN(Number(value))) {
+              throw new Error("Page have to be a number");
+            }
+          }
+          return true;
+        }),
+        query("limit").custom((value, { req, res }) => {
+          if (value) {
+            if (isNaN(Number(value))) {
+              throw new Error("Limit have to be a number");
+            }
+          }
+          return true;
+        }),
+    
+        query("age").custom((value, { req, res }) => {
+          if (value) {
+            if (isNaN(Number(value))) {
+              throw new Error("Stock have to be a number");
+            }
+          }
+          return true;
+        }),
+    
+        query("ageCriteria").custom((value, { req, res }) => {
+          if (value) {
+            if (
+              !(
+                value === "gt" ||
+                value === "gte" ||
+                value === "lt" ||
+                value === "lte" ||
+                value === "eq" ||
+                value === "ne"
+              )
+            ) {
+              throw new Error("Enter a criteria for stock");
+            }
+          }
+          return true;
+        }),
+      ],
+
+
+      booksQuery: [
+        query("page").custom((value, { req, res }) => {
+          if (value) {
+            if (isNaN(Number(value))) {
+              throw new Error("Page have to be a number");
+            }
+          }
+          return true;
+        }),
+        query("limit").custom((value, { req, res }) => {
+          if (value) {
+            if (isNaN(Number(value))) {
+              throw new Error("Limit have to be a number");
+            }
+          }
+          return true;
+        }),
+    
+        query("price").custom((value, { req, res }) => {
+          if (value) {
+            if (isNaN(Number(value))) {
+              throw new Error("Price have to be a number");
+            }
+          }
+          return true;
+        }),
+        query("rating").custom((value, { req, res }) => {
+          if (value) {
+            if (isNaN(Number(value))) {
+              throw new Error("Rating have to be a number");
+            }
+          }
+          return true;
+        }),
+        query("stock").custom((value, { req, res }) => {
+          if (value) {
+            if (isNaN(Number(value))) {
+              throw new Error("Stock have to be a number");
+            }
+          }
+          return true;
+        }),
+    
+        query("priceCriteria").custom((value, { req, res }) => {
+          if (value) {
+            if (
+              !(
+                value === "gt" ||
+                value === "gte" ||
+                value === "lt" ||
+                value === "lte" ||
+                value === "eq" ||
+                value === "ne"
+              )
+            ) {
+              throw new Error("Enter a criteria for price");
+            }
+          }
+          return true;
+        }),
+        query("ratingCriteria").custom((value, { req, res }) => {
+          if (value) {
+            if (
+              !(
+                value === "gt" ||
+                value === "gte" ||
+                value === "lt" ||
+                value === "lte" ||
+                value === "eq" ||
+                value === "ne"
+              )
+            ) {
+              throw new Error("Enter a criteria for rating");
+            }
+          }
+          return true;
+        }),
+        query("stockCriteria").custom((value, { req, res }) => {
+          if (value) {
+            if (
+              !(
+                value === "gt" ||
+                value === "gte" ||
+                value === "lt" ||
+                value === "lte" ||
+                value === "eq" ||
+                value === "ne"
+              )
+            ) {
+              throw new Error("Enter a criteria for stock");
+            }
+          }
+          return true;
+        }),
+      ],
+
 
 
     booksQuery: [
