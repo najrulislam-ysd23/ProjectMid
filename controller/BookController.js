@@ -13,7 +13,7 @@ class Book {
                     .send(failure("Invalid property input", validation));
             }
 
-            let { page, limit, title, description, price, priceCriteria, rating, ratingCriteria, stock, stockCriteria, discountPercentage, discountCriteria, author, genre, search, sortParam, sortOrder } = req.query;
+            let { page, limit, bookName, description, price, priceCriteria, rating, ratingCriteria, stock, stockCriteria, discountPercentage, discountCriteria, author, genre, search, sortParam, sortOrder } = req.query;
 
             const defaultPage = 1;
             const defaultLimit = 10;
@@ -73,13 +73,13 @@ class Book {
                 queryObject.rating = { $eq: rating };
             }
 
-            if (discountPercentage && discountCriteria) {
-                queryObject.discountPercentage = { [`$${discountCriteria}`]: discountPercentage };
-            } else if (discountCriteria && !discountPercentage) {
-                return res.status(HTTP_STATUS.BAD_REQUEST).send(failure("Invalid request for filter by rating"));
-            } else if (discountPercentage && !discountCriteria) {
-                queryObject.discountPercentage = { $eq: discountPercentage };
-            }
+            // if (discountPercentage && discountCriteria) {
+            //     queryObject.discountPercentage = { [`$${discountCriteria}`]: discountPercentage };
+            // } else if (discountCriteria && !discountPercentage) {
+            //     return res.status(HTTP_STATUS.BAD_REQUEST).send(failure("Invalid request for filter by rating"));
+            // } else if (discountPercentage && !discountCriteria) {
+            //     queryObject.discountPercentage = { $eq: discountPercentage };
+            // }
 
             if (stock && stockCriteria) {
                 queryObject.stock = { [`$${stockCriteria}`]: stock };
@@ -97,8 +97,8 @@ class Book {
 
             const pageBooks = await BookModel.find(queryObject)
                 .or([
-                    { title: { $regex: search, $options: "i" } },
-                    { description: { $regex: search, $options: "i" } }
+                    { bookName: { $regex: search, $options: "i" } },
+                    { description: { $regex: search, $options: "i" } },
                 ])
                 .sort(sortObject)
                 .skip(skipValue)
@@ -158,11 +158,12 @@ class Book {
                     .send(failure("Validation error", validation));
             } else {
                 // const {name, email, role, personal_info{age, address}} = req.body;
-                const { bookISBN, bookName, author, genre, price, stock } = req.body;
-                genre = genre.toLowerCase();
+                const { bookISBN, bookName, description, author, genre, price, stock } = req.body;
+                // genre = genre.toLowerCase();
                 const book = new BookModel({
                     bookISBN,
                     bookName,
+                    description,
                     author,
                     genre,
                     price,

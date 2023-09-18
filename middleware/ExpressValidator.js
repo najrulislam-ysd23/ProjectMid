@@ -188,6 +188,9 @@ const validator = {
             .isString()
             .withMessage("Book name have to be a string")
             .bail()
+            .isLength({ min: 1 })
+            .withMessage("Product title must be at least 1 characters long")
+            .bail()
             .custom((value, { req, res }) => {
                 console.log(value);
                 if (value.length <= 0) {
@@ -195,6 +198,15 @@ const validator = {
                 }
                 return true;
             }),
+        body("description")
+            .exists()
+            .withMessage("Product description must be provided")
+            .bail()
+            .isString()
+            .withMessage("Product description must be a string")
+            .bail()
+            .isLength({ min: 10 })
+            .withMessage("Product description must be at least 30 characters long"),
         body("author")
             .exists()
             .withMessage("Book name must be specified")
