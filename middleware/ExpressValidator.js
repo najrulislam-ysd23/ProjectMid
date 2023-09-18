@@ -88,6 +88,17 @@ const validator = {
             .isString()
             .withMessage("Country have to be a string")
             .bail(),
+        body("balance")
+            .isNumeric()
+            .withMessage("Enter a valid balance")
+            .custom((value, { req, res }) => {
+                if (value < 0) {
+                    throw new Error("Balance should be positive");
+                } else if (value > 50000) {
+                    throw new Error("Can not add more than 50000 at once");
+                }
+                return true;
+            }),
     ],
 
     login: [
@@ -184,9 +195,232 @@ const validator = {
                 }
                 return true;
             }),
+        body("author")
+            .exists()
+            .withMessage("Book name must be specified")
+            .bail(),
+        body("genre")
+            .exists()
+            .withMessage("Book name must be specified")
+            .bail(),
+        body("price")
+            .exists()
+            .withMessage("Book name must be specified")
+            .bail(),
+        body("stock")
+            .exists()
+            .withMessage("Book name must be specified")
+            .bail(),
+
+    ],
+
+    getUsersQuery: [
+        query("page").custom((value, { req, res }) => {
+            if (value) {
+                if (isNaN(Number(value))) {
+                    throw new Error("Page have to be a number");
+                }
+            }
+            return true;
+        }),
+        query("limit").custom((value, { req, res }) => {
+            if (value) {
+                if (isNaN(Number(value))) {
+                    throw new Error("Limit have to be a number");
+                }
+            }
+            return true;
+        }),
+
+        query("age").custom((value, { req, res }) => {
+            if (value) {
+                if (isNaN(Number(value))) {
+                    throw new Error("Stock have to be a number");
+                }
+            }
+            return true;
+        }),
+
+        query("ageCriteria").custom((value, { req, res }) => {
+            if (value) {
+                if (
+                    !(
+                        value === "gt" ||
+                        value === "gte" ||
+                        value === "lt" ||
+                        value === "lte" ||
+                        value === "eq" ||
+                        value === "ne"
+                    )
+                ) {
+                    throw new Error("Enter a criteria for stock");
+                }
+            }
+            return true;
+        }),
+    ],
+
+    addDiscount: [
+        body("discountPercentage")
+            .isNumeric()
+            .withMessage("Discount Percentage must be a number")
+            .bail()
+            .custom((value, { req, res }) => {
+                if (value < 0 || value > 100) {
+                    throw new Error("Enter valid discount percentage");
+                }
+                return true;
+            }),
+        body("discountFrom")
+            .isDate()
+            .withMessage("Discount From must be in date time format")
+            .bail(),
+        body("discountTill")
+            .isDate()
+            .withMessage("Discount Till must be a date time format")
+            .bail(),
     ],
 
 
+
+    booksQuery: [
+        query("page").custom((value, { req, res }) => {
+            if (value) {
+                if (isNaN(Number(value))) {
+                    throw new Error("Page have to be a number");
+                }
+            }
+            return true;
+        }),
+        query("limit").custom((value, { req, res }) => {
+            if (value) {
+                if (isNaN(Number(value))) {
+                    throw new Error("Limit have to be a number");
+                }
+            }
+            return true;
+        }),
+
+        query("price").custom((value, { req, res }) => {
+            if (value) {
+                if (isNaN(Number(value))) {
+                    throw new Error("Price have to be a number");
+                }
+            }
+            return true;
+        }),
+        query("rating").custom((value, { req, res }) => {
+            if (value) {
+                if (isNaN(Number(value))) {
+                    throw new Error("Rating have to be a number");
+                }
+            }
+            return true;
+        }),
+        query("discountPercentage").custom((value, { req, res }) => {
+            if (value) {
+                if (isNaN(Number(value))) {
+                    throw new Error("Discount Percentage have to be a number");
+                }
+            }
+            return true;
+        }),
+        query("stock").custom((value, { req, res }) => {
+            if (value) {
+                if (isNaN(Number(value))) {
+                    throw new Error("Stock have to be a number");
+                }
+            }
+            return true;
+        }),
+
+        query("priceCriteria").custom((value, { req, res }) => {
+            if (value) {
+                if (
+                    !(
+                        value === "gt" ||
+                        value === "gte" ||
+                        value === "lt" ||
+                        value === "lte" ||
+                        value === "eq" ||
+                        value === "ne"
+                    )
+                ) {
+                    throw new Error("Enter a criteria for price");
+                }
+            }
+            return true;
+        }),
+        query("ratingCriteria").custom((value, { req, res }) => {
+            if (value) {
+                if (
+                    !(
+                        value === "gt" ||
+                        value === "gte" ||
+                        value === "lt" ||
+                        value === "lte" ||
+                        value === "eq" ||
+                        value === "ne"
+                    )
+                ) {
+                    throw new Error("Enter a criteria for rating");
+                }
+            }
+            return true;
+        }),
+        query("discountCriteria").custom((value, { req, res }) => {
+            if (value) {
+                if (
+                    !(
+                        value === "gt" ||
+                        value === "gte" ||
+                        value === "lt" ||
+                        value === "lte" ||
+                        value === "eq" ||
+                        value === "ne"
+                    )
+                ) {
+                    throw new Error("Enter a criteria for discount");
+                }
+            }
+            return true;
+        }),
+        query("stockCriteria").custom((value, { req, res }) => {
+            if (value) {
+                if (
+                    !(
+                        value === "gt" ||
+                        value === "gte" ||
+                        value === "lt" ||
+                        value === "lte" ||
+                        value === "eq" ||
+                        value === "ne"
+                    )
+                ) {
+                    throw new Error("Enter a criteria for stock");
+                }
+            }
+            return true;
+        }),
+    ],
+
+    cart: [
+        body("user").isString().withMessage("User has to be a string"),
+        body("book").isString().withMessage("Book has to be a string"),
+        body("quantity").custom((value, { req, res }) => {
+            if (value) {
+                if (isNaN(Number(value))) {
+                    throw new Error("Stock have to be a number");
+                }
+            }
+            return true;
+        }),
+    ],
+    checkoutCart: [
+        body("cartId").isString().withMessage("cartId has to be a string"),
+    ],
+
+    review: [],
 
 };
 

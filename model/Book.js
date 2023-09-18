@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const moment = require('moment');
 const Schema = mongoose.Schema;
 
 const bookSchema = new Schema(
@@ -23,6 +24,7 @@ const bookSchema = new Schema(
         price: {
             type: Number,
             default: 0,
+            min: 1,
         },
         stock: {
             type: Number,
@@ -32,10 +34,27 @@ const bookSchema = new Schema(
         },
         rating: {
             type: Number,
-            required: true,
+            default: 0,
             min: 1,
             max: 5,
         },
+        discount: [
+            {
+                discountPercentage: {
+                    type: Number,
+                    default: 0,
+                    min: 1,
+                    max: 100,
+                },
+                discountFrom: {
+                    type: Date,
+                    default: moment(new Date()).format('DD-MM-YY HH:mm:ss'),
+                },
+                discountTill: {
+                    type: Date,
+                },
+            },
+        ],
 
         // For array of objects
         // Orders: {

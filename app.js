@@ -5,7 +5,10 @@ const app = express();
 
 const AuthRouter = require("./routes/Auth");
 const UserRouter = require("./routes/User");
-
+const BookRouter = require("./routes/Book");
+const TransactionRouter = require("./routes/Transaction");
+const CartRouter = require("./routes/Cart");
+const ReviewRouter = require("./routes/Review");
 
 
 const dotenv = require("dotenv");
@@ -21,6 +24,10 @@ app.use(express.urlencoded({ extended: true })); // Parses data as urlencoded
 
 app.use("/auth", AuthRouter);
 app.use("/users", UserRouter);
+app.use("/books", BookRouter);
+app.use("/transactions", TransactionRouter);
+app.use("/cart", CartRouter);
+app.use("/review", ReviewRouter);
 
 
 // NO-ROUTE MATCHED

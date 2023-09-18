@@ -6,8 +6,10 @@ const authValidation = require("../middleware/Auth");
 
 
 routes.post('/add', authValidation.isAuthorized, authValidation.isAdmin, expressValidation.createBook, BookController.addBook);
-routes.get("/all", authValidation.isAuthorized, BookController.getAll);
-routes.get('/book/:id', BookController.getById);
+routes.get("/all", authValidation.isAuthorized, BookController.getBooks);
+routes.get('/book/:id', BookController.getBook);
+routes.post('/add-discount', authValidation.isAuthorized, authValidation.isAdmin, expressValidation.addDiscount, BookController.addDiscount);
+
 
 
 

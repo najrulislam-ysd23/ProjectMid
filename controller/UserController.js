@@ -9,7 +9,7 @@ const jsonwebtoken = require('jsonwebtoken');
 
 
 class User {
-    async getAll(req, res) {
+    async getUsers(req, res) {
         try {
             const users = await UserModel.find({})
                 .sort("-createdAt");
@@ -25,7 +25,7 @@ class User {
         }
     }
 
-    async getOne(req, res) {
+    async getOneUser(req, res) {
         try {
             const { email } = req.body;
             const user = await AuthModel.findOne({ email: email })
@@ -158,7 +158,44 @@ class User {
         }
     }
 
+    async updateBalance(req, res) {
+        try {
+            console.log("executing deleteUser");
+            const validation = validationResult(req).array();
+            console.log(validation);
+            if (validation.length > 0) {
+                //   return res.status(422).send(failure("Invalid properties", validation));
+                return res
+                    .status(HTTP_STATUS.OK)
+                    .send(failure("Validation error", validation));
+            }
+            const { email } = req.body;
+            if (!email) {
+                return res.status(HTTP_STATUS.NOT_ACCEPTABLE).send(failure("Provide email of the user to delete"));
+            }
+            let userRequested = await AuthModel.findOne({ email: email });
+            if (!userRequested) {
+                return res
+                    .status(HTTP_STATUS.NOT_FOUND)
+                    .send(success("User does not exist"));
+            }
+            const user = await UserModel.deleteOne({ email: email });
 
+            if (user) {
+                const auth = await AuthModel.deleteOne({ email: email });
+                if (auth) {
+                    return res.status(HTTP_STATUS.ACCEPTED).send(success("Successfully deleted the user"));
+                } else {
+                    return res.status(HTTP_STATUS.NOT_FOUND).send(failure("Failed to delete the user"));
+                }
+
+            } else {
+                return res.status(HTTP_STATUS.NOT_FOUND).send(failure("Failed to delete the user"));
+            }
+        } catch (error) {
+            return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(failure("Internal server error while deleting user"));
+        }
+    }
 
 
 }
