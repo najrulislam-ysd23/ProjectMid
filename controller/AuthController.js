@@ -33,9 +33,10 @@ class AuthController {
             // Matching password
             const checkPassword = await bcrypt.compare(password, existingUser.password);
             if (checkPassword) {
-                const userInfo = await AuthModel.findOne({ email: email }).select("email role -_id")
-                    .populate("user", "name age address -_id")
 
+                const userInfo = await AuthModel.findOne({ email: email }).select("email role -_id")
+                    .populate("user", "name age address -_id");
+                console.log("Auth debug");
                 const responseUserInfo = userInfo.toObject();
 
                 const jwt = jsonwebtoken.sign(responseUserInfo, process.env.SECRET_KEY, { expiresIn: "1h" }); console.log(jwt);
@@ -133,7 +134,7 @@ class AuthController {
                 return res.status(HTTP_STATUS.UNPROCESSABLE_ENTITY).send(failure("Provide information correctly", validation));
             }
 
-            const { name, email, password, confirmPassword, role, age, area, city, country } = req.body;
+            const { name, email, password, confirmPassword, role, age, area, city, country, balance } = req.body;
 
             if (password != confirmPassword) {
                 return res.status(HTTP_STATUS.OK).send(failure("Passwords did not match."));
@@ -151,7 +152,7 @@ class AuthController {
             }
             // Creating user instance
             const address = { area, city, country };
-            const user = new UserModel({ name, email, role, age, address });
+            const user = new UserModel({ name, email, role, age, address, balance });
             console.log(user, user.address);
             await user
                 .save()

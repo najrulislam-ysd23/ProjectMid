@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const moment = require('moment');
 const Schema = mongoose.Schema;
 
 const bookSchema = new Schema(
@@ -12,9 +13,13 @@ const bookSchema = new Schema(
             type: String,
             required: [true, "Book name is not provided"],
         },
+        description: {
+            type: String,
+            required: [true, "Description is not provided"],
+        },
         author: {
             type: String,
-            required: [true, "Book author is not provided"],
+            required: [true, "Book author not provided"],
         },
         genre: {
             type: String,
@@ -22,20 +27,37 @@ const bookSchema = new Schema(
         },
         price: {
             type: Number,
-            default: 0,
+            required: [true, "Book price is not provided"],
+            min: 1,
         },
         stock: {
             type: Number,
-            default: 0,
             min: 1,
             max: 1000,
         },
         rating: {
             type: Number,
-            required: true,
             min: 1,
             max: 5,
         },
+        discount: [
+            {
+                discountPercentage: {
+                    type: Number,
+                    min: 1,
+                    max: 100,
+                },
+                discountFrom: {
+                    type: Date,
+                    // default: moment(new Date()).format('DD-MM-YY HH:mm:ss'),
+                },
+                discountTill: {
+                    type: Date,
+                    // default: moment(new Date()).format('DD-MM-YY HH:mm:ss'),
+                },
+            },
+        ],
+
 
         // For array of objects
         // Orders: {

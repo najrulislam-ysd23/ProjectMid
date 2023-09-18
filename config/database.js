@@ -8,7 +8,7 @@ const databaseConnection = async (callback) => {
         console.log("Database connected successfully");
         callback();
       } else {
-        console.log("Database conenction failed");
+        console.log("Database connection failed");
       }
     } else {
       console.log("Database URL is not provided");

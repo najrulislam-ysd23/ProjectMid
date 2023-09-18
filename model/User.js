@@ -39,6 +39,12 @@ const userSchema = new Schema({
             required: true,
         },
     },
+    balance: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 50000,
+    },
     createdAt: {
         type: Date,
         default: new Date(),

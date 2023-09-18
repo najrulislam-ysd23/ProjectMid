@@ -4,7 +4,7 @@ const { success, failure } = require("../util/common");
 const HTTP_STATUS = require("../constants/statusCodes");
 
 class Book {
-    async getAll(req, res) {
+    async getBooks(req, res) {
         try {
             const validation = validationResult(req).array();
             if (validation.length > 0) {
@@ -13,10 +13,10 @@ class Book {
                     .send(failure("Invalid property input", validation));
             }
 
-            let { page, limit, title, description, price, priceCriteria, rating, ratingCriteria, stock, stockCriteria, author, genre, search, sortParam, sortOrder } = req.query;
+            let { page, limit, bookName, description, price, priceCriteria, rating, ratingCriteria, stock, stockCriteria, discountPercentage, discountCriteria, author, genre, search, sortParam, sortOrder } = req.query;
 
             const defaultPage = 1;
-            const defaultLimit = 20;
+            const defaultLimit = 10;
 
             let skipValue = (defaultPage - 1) * defaultLimit;
             let pageNumber = defaultPage;
@@ -73,6 +73,14 @@ class Book {
                 queryObject.rating = { $eq: rating };
             }
 
+            // if (discountPercentage && discountCriteria) {
+            //     queryObject.discountPercentage = { [`$${discountCriteria}`]: discountPercentage };
+            // } else if (discountCriteria && !discountPercentage) {
+            //     return res.status(HTTP_STATUS.BAD_REQUEST).send(failure("Invalid request for filter by rating"));
+            // } else if (discountPercentage && !discountCriteria) {
+            //     queryObject.discountPercentage = { $eq: discountPercentage };
+            // }
+
             if (stock && stockCriteria) {
                 queryObject.stock = { [`$${stockCriteria}`]: stock };
             } else if (stockCriteria && !stock) {
@@ -87,27 +95,27 @@ class Book {
                 search = "";
             }
 
-            const pageProducts = await ProductModel.find(queryObject)
+            const pageBooks = await BookModel.find(queryObject)
                 .or([
-                    { title: { $regex: search, $options: "i" } },
-                    { description: { $regex: search, $options: "i" } }
+                    { bookName: { $regex: search, $options: "i" } },
+                    { description: { $regex: search, $options: "i" } },
                 ])
                 .sort(sortObject)
                 .skip(skipValue)
                 .limit(limit || defaultLimit);
-            if (pageProducts.length === 0) {
-                return res.status(HTTP_STATUS.NOT_FOUND).send(failure("No products to show"));
+            if (pageBooks.length === 0) {
+                return res.status(HTTP_STATUS.NOT_FOUND).send(failure("No books to show"));
             }
-            // const totalProducts = (await ProductModel.find({})).length;
+            const totalBooks = (await BookModel.find({})).length;
             return res
                 .status(HTTP_STATUS.OK)
                 .send(
                     success("Successfully got the books", {
-                        // total: totalProducts,
+                        total: totalBooks,
                         pageNo: Number(pageNumber),
                         limit: Number(limit),
-                        countPerPage: pageProducts.length,
-                        products: pageProducts,
+                        countPerPage: pageBooks.length,
+                        books: pageBooks,
                     })
                 );
         } catch (error) {
@@ -118,9 +126,9 @@ class Book {
         }
     }
 
-    async getById(req, res) {
+    async getOneBook(req, res) {
         try {
-            const { id } = req.params;
+            const id = req.params.id;
             const book = await BookModel.findById({ _id: id });
             if (book) {
                 return res
@@ -150,10 +158,12 @@ class Book {
                     .send(failure("Validation error", validation));
             } else {
                 // const {name, email, role, personal_info{age, address}} = req.body;
-                const { bookISBN, bookName, author, genre, price, stock } = req.body;
+                const { bookISBN, bookName, description, author, genre, price, stock } = req.body;
+                // genre = genre.toLowerCase();
                 const book = new BookModel({
                     bookISBN,
                     bookName,
+                    description,
                     author,
                     genre,
                     price,
@@ -184,6 +194,136 @@ class Book {
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
                 .send(failure("Internal server error from add"));
+        }
+    }
+
+    async updateBook(req, res) {
+        try {
+            console.log("executing updateBook");
+
+            const { id, bookName, description, author, genre, price, stock } = req.body;
+            let updateObject = {};
+
+            let userRequested = await BookModel.findOne({ _id: id });
+            if (!userRequested) {
+                return res
+                    .status(HTTP_STATUS.NOT_FOUND)
+                    .send(success("User does not exist"));
+            }
+            if (name || age || area || city || country) {
+                return res.status(HTTP_STATUS.UNAUTHORIZED).send(failure("You can only update role or verify an user"));
+                // return res.status(HTTP_STATUS.NOT_MODIFIED).send(failure("You can only update role or verify an user"));
+            }
+            if (role) {
+                updateObject.role = role;
+            }
+            if (verified) {
+                updateObject.verified = verified;
+            }
+            if (!role && !verified) {
+                return res.status(HTTP_STATUS.NOT_ACCEPTABLE).send(failure("Provide valid property/s to update role or verify user"));
+            }
+
+            // console.log(updateObject);
+            // user = await AuthModel.updateOne(
+            //     { email: email },
+            //     { $set: updateObject }
+            // );
+
+            // const { email } = req.body;
+            // if (email) {
+            //     return res.status(HTTP_STATUS.NOT_ACCEPTABLE).send(failure("Invalid properties"));
+            // }
+            // if (!name && !age && !area && !city && !country && !cashIn && !cashOut) {
+            //     return res.status(HTTP_STATUS.NOT_ACCEPTABLE).send(failure("Provide valid property/s to update"));
+            // }
+            // if (name) {
+            //     updateObject.name = name;
+            // }
+            // if (age) {
+            //     updateObject.age = age;
+            // }
+            // if (area) {
+            //     updateObject.address.area = area;
+            // }
+            // if (city) {
+            //     updateObject.address.city = city;
+            // }
+            // if (country) {
+            //     updateObject.address.country = country;
+            // }
+            // let userRequested = await UserModel.findOne({ email: decoded.email });
+            // if(cashIn && cashOut) {
+            //     return res
+            //             .status(HTTP_STATUS.NOT_ACCEPTABLE)
+            //             .send(failure("You can not request for both cashIn and cashOut"));
+            // } else if (cashIn) {
+            //     const newBalance = userRequested.balance+cashIn;
+            //     if(cashIn<=50000){
+            //         updateObject.balance = newBalance;
+            //     } else {
+            //         return res
+            //             .status(HTTP_STATUS.NOT_ACCEPTABLE)
+            //             .send(failure("You can not cash-in more than 50000 at once"));
+            //     }
+            // } else if (cashOut) {
+            //     const newBalance = userRequested.balance-cashOut;
+            //     if(newBalance>=100){
+            //         updateObject.balance = newBalance;
+            //     } else {
+            //         return res
+            //             .status(HTTP_STATUS.NOT_ACCEPTABLE)
+            //             .send(failure(`You can not cash-out more than ${userRequested.balance-100}`));
+            //     }
+            // }
+            // user = await UserModel.updateOne(
+            //     { email: decoded.email },
+            //     { $set: updateObject }
+            // );
+
+            if (user) {
+                return res.status(HTTP_STATUS.OK).send(success("Successfully updated the user", user));
+            } else {
+                return res.status(HTTP_STATUS.NOT_FOUND).send(failure("Failed to update the user"));
+            }
+        } catch (error) {
+            return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(failure("Internal server error while updating user"));
+        }
+    }
+
+
+    async addDiscount(req, res) {
+        try {
+            const validation = validationResult(req).array();
+            console.log(validation);
+            if (validation.length > 0) {
+                //   return res.status(422).send(failure("Invalid properties", validation));
+                return res
+                    .status(HTTP_STATUS.OK)
+                    .send(failure("Validation error", validation));
+            }
+            // const {name, email, role, personal_info{age, address}} = req.body;
+            const { id, discountPercentage, discountFrom, discountTill } = req.body;
+            const discountObject = {};
+            discount.discountPercentage = discountPercentage;
+            discount.discountFrom = discountFrom;
+            discount.discountTill = discountTill;
+
+            const book = await BookModel.findOneAndUpdate(
+                { _id: id },
+                { $set: discountObject }
+            );
+            if (book) {
+                return res.status(HTTP_STATUS.OK).send(success("Successfully added discount to the book", user));
+            } else {
+                return res.status(HTTP_STATUS.NOT_MODIFIED).send(failure("Failed to add discount to the book"));
+            }
+
+        } catch (error) {
+            console.log(error);
+            return res
+                .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+                .send(failure("Internal server error from add-discount"));
         }
     }
 
