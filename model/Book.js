@@ -37,26 +37,11 @@ const bookSchema = new Schema(
         },
         rating: {
             type: Number,
-            min: 1,
+            min: 0,
             max: 5,
         },
-        discount: [
-            {
-                discountPercentage: {
-                    type: Number,
-                    min: 1,
-                    max: 100,
-                },
-                discountFrom: {
-                    type: Date,
-                    // default: moment(new Date()).format('DD-MM-YY HH:mm:ss'),
-                },
-                discountTill: {
-                    type: Date,
-                    // default: moment(new Date()).format('DD-MM-YY HH:mm:ss'),
-                },
-            },
-        ],
+
+
 
 
         // For array of objects
