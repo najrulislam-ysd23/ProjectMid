@@ -9,12 +9,12 @@ const BookRouter = require("./routes/Book");
 const TransactionRouter = require("./routes/Transaction");
 const CartRouter = require("./routes/Cart");
 const ReviewRouter = require("./routes/Review");
+const DiscountRouter = require("./routes/Discount");
 
 
 const dotenv = require("dotenv");
 dotenv.config();
 const databaseConnection = require("./config/database");
-
 
 app.use(express.json()); // Parses data as JSON
 app.use(express.text()); // Parses data as text
@@ -28,6 +28,7 @@ app.use("/books", BookRouter);
 app.use("/transactions", TransactionRouter);
 app.use("/cart", CartRouter);
 app.use("/review", ReviewRouter);
+app.use("/discount", DiscountRouter);
 
 
 // NO-ROUTE MATCHED
