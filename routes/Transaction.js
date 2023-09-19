@@ -2,12 +2,11 @@ const express = require("express");
 const routes = express();
 const TransactionController = require("../controller/TransactionController");
 const expressValidation = require("../middleware/ExpressValidator");
+const authValidation = require("../middleware/Auth");
 
 
-// routes.post('/add', expressValidation.createOrder, OrderController.addProduct);
-routes.get("/all", TransactionController.getAll);
-routes.get('/transaction/:id', TransactionController.getById);
-
+routes.get("/all", authValidation.isAuthorized, authValidation.isAdmin, TransactionController.getAll);
+routes.get("/:id", authValidation.isAuthorized, authValidation.isCustomer, TransactionController.getById);
 
 
 module.exports = routes;

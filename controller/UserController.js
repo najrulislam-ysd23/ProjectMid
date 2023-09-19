@@ -4,17 +4,23 @@ const UserModel = require("../model/User");
 const { success, failure } = require("../util/common");
 const HTTP_STATUS = require("../constants/statusCodes");
 const jsonwebtoken = require("jsonwebtoken");
+const logger = require("../middleware/logger");
+let logEntry;
+let routeAccess;
 
 class User {
     async getUsers(req, res) {
+        routeAccess = '/users/all';
         try {
             const validation = validationResult(req).array();
             if (validation.length > 0) {
+                logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.OK)
                     .send(failure("Invalid property input", validation));
             }
-            let { page, limit, age, ageCriteria, role, verified, search, sortParam, sortOrder } = req.query;
+            let { page, limit, role, verified, search, sortParam, sortOrder } = req.query;
 
             const defaultPage = 1;
             const defaultLimit = 3;
@@ -52,15 +58,6 @@ class User {
             if (verified) {
                 queryObject.verified = verified;
             }
-            if (age && ageCriteria) {
-                queryObject.user.age = { [`$${ageCriteria}`]: age };
-            } else if (ageCriteria && !age) {
-                return res
-                    .status(HTTP_STATUS.BAD_REQUEST)
-                    .send(failure("Invalid request for filter by age"));
-            } else if (age && !ageCriteria) {
-                queryObject.user.age = { $eq: age };
-            }
 
 
             if (!search) {
@@ -81,7 +78,9 @@ class User {
 
             console.log(users);
             if (users.length > 0) {
-                return res.status(HTTP_STATUS.OK).send(
+                logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
+                return res.status(HTTP_STATUS.ACCEPTED).send(
                     success("Successfully got the users", {
                         total: totalUsers,
                         pageNo: Number(pageNumber),
@@ -91,10 +90,14 @@ class User {
                     })
                 );
             } else {
-                return res.status(HTTP_STATUS.OK).send(success("No users were found"));
+                logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
+                return res.status(HTTP_STATUS.NOT_FOUND).send(success("No users were found"));
             }
         } catch (error) {
             console.log(error);
+            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
                 .send(failure("Internal server error from getAll"));
@@ -102,23 +105,29 @@ class User {
     }
 
     async getOneUser(req, res) {
+        routeAccess = '/users/:id';
         try {
             const id = req.params.id;
             const user = await UserModel.findOne({ _id: id }).select("-__v -createdAt -updatedAt");
             if (user) {
+                logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.OK).send(success("Successfully received the user", user));
             } else {
+                logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.OK).send(failure("Failed to receive the user"));
             }
         } catch (error) {
+            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logger.addLog(logEntry);
             return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(failure("Internal server error from getOneUser"));
         }
     }
 
     async updateUser(req, res) {
+        routeAccess = '/users/user/update';
         try {
-            console.log("executing updateUser");
-
             const { role, verified, name, age, area, city, country, cashIn, cashOut } = req.body;
             let updateObject = {};
             const jwt = req.headers.authorization.split(" ")[1];
@@ -128,17 +137,23 @@ class User {
             if (decoded.role == "admin") {
                 const { email } = req.body;
                 if (!email) {
+                    logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                    logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.NOT_ACCEPTABLE)
                         .send(failure("Provide email of the user to update"));
                 }
                 let userRequested = await AuthModel.findOne({ email: email });
                 if (!userRequested) {
+                    logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                    logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.NOT_FOUND)
                         .send(success("User does not exist"));
                 }
                 if (name || age || area || city || country) {
+                    logEntry = `${routeAccess} | status: unauthorized | timestamp: ${new Date().toLocaleString()}\n`;
+                    logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.UNAUTHORIZED)
                         .send(failure("You can only update role or verify an user"));
@@ -151,6 +166,8 @@ class User {
                     updateObject.verified = verified;
                 }
                 if (!role && !verified) {
+                    logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                    logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.NOT_ACCEPTABLE)
                         .send(
@@ -166,11 +183,15 @@ class User {
             } else if (decoded.role == "customer") {
                 const { email } = req.body;
                 if (email) {
+                    logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                    logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.NOT_ACCEPTABLE)
                         .send(failure("Invalid properties"));
                 }
                 if (!name && !age && !area && !city && !country && !cashIn && !cashOut) {
+                    logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                    logger.addLog(logEntry);
                     return res.status(HTTP_STATUS.NOT_ACCEPTABLE).send(failure("Provide valid property/s to update"));
                 }
                 if (name) {
@@ -190,6 +211,8 @@ class User {
                 }
                 let userRequested = await UserModel.findOne({ email: decoded.email });
                 if(cashIn && cashOut) {
+                    logEntry = `${routeAccess} | status: request conflict | timestamp: ${new Date().toLocaleString()}\n`;
+                    logger.addLog(logEntry);
                     return res
                             .status(HTTP_STATUS.NOT_ACCEPTABLE)
                             .send(failure("You can not request for both cashIn and cashOut"));
@@ -198,6 +221,8 @@ class User {
                     if(cashIn<=50000){
                         updateObject.balance = newBalance;
                     } else {
+                        logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                        logger.addLog(logEntry);
                         return res
                             .status(HTTP_STATUS.NOT_ACCEPTABLE)
                             .send(failure("You can not cash-in more than 50000 at once"));
@@ -207,6 +232,8 @@ class User {
                     if(newBalance>=100){
                         updateObject.balance = newBalance;
                     } else {
+                        logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                        logger.addLog(logEntry);
                         return res
                             .status(HTTP_STATUS.NOT_ACCEPTABLE)
                             .send(failure(`You can not cash-out more than ${userRequested.balance-100}`));
@@ -219,15 +246,21 @@ class User {
             }
 
             if (user) {
+                logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
                 return res
-                    .status(HTTP_STATUS.OK)
+                    .status(HTTP_STATUS.ACCEPTED)
                     .send(success("Successfully updated the user", user));
             } else {
+                logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
                 return res
-                    .status(HTTP_STATUS.NOT_FOUND)
+                    .status(HTTP_STATUS.NOT_MODIFIED)
                     .send(failure("Failed to update the user"));
             }
         } catch (error) {
+            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
                 .send(failure("Internal server error while updating user"));
@@ -235,24 +268,30 @@ class User {
     }
 
     async deleteUser(req, res) {
+        routeAccess = '/users/user/delete';
         try {
             console.log("executing deleteUser");
             const validation = validationResult(req).array();
             console.log(validation);
             if (validation.length > 0) {
-                //   return res.status(422).send(failure("Invalid properties", validation));
+                logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.OK)
                     .send(failure("Validation error", validation));
             }
             const { email } = req.body;
             if (!email) {
+                logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.NOT_ACCEPTABLE)
                     .send(failure("Provide email of the user to delete"));
             }
             let userRequested = await AuthModel.findOne({ email: email });
             if (!userRequested) {
+                logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.NOT_FOUND)
                     .send(success("User does not exist"));
@@ -262,20 +301,28 @@ class User {
             if (user) {
                 const auth = await AuthModel.deleteOne({ email: email });
                 if (auth) {
+                    logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                    logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.ACCEPTED)
                         .send(success("Successfully deleted the user"));
                 } else {
+                    logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                    logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.NOT_FOUND)
                         .send(failure("Failed to delete the user"));
                 }
             } else {
+                logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.NOT_FOUND)
                     .send(failure("Failed to delete the user"));
             }
         } catch (error) {
+            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
                 .send(failure("Internal server error while deleting user"));

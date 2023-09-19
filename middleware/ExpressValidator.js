@@ -112,7 +112,10 @@ const validator = {
             .isEmail()
             .withMessage("Enter a valid email")
             .bail(),
-        body("password").exists().bail().withMessage("Enter password"),
+        body("password")
+            .exists()
+            .withMessage("Enter password")
+            .bail(),
     ],
 
     createUser: [
