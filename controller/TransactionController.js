@@ -1,17 +1,55 @@
 const { validationResult } = require("express-validator");
 const TransactionModel = require("../model/Transaction");
+const UserModel = require("../model/User");
 const { success, failure } = require("../util/common");
 const HTTP_STATUS = require("../constants/statusCodes");
+const logger = require("../middleware/logger");
+let logEntry;
+let routeAccess;
 
 class Transaction {
     async getAll(req, res) {
+        routeAccess = '/transactions/all';
         try {
-            const transactions = await TransactionModel.find({})
+            const { user, page, limit,  } = req.query;
+            const defaultPage = 1;
+            const defaultLimit = 10;
+
+            let skipValue = (defaultPage - 1) * defaultLimit;
+            let pageNumber = defaultPage;
+            if (page > 0 && limit > 0) {
+                skipValue = (page - 1) * limit;
+                pageNumber = page;
+            } else {
+                if (page > 0) { // only page given
+                    skipValue = (page - 1) * defaultLimit;
+                    pageNumber = page;
+                } else if (limit > 0) { // only limit given
+                    skipValue = (defaultPage - 1) * limit;
+                }
+            }
+            let queryObject = {};
+            if(user) {
+                queryObject.user = user;
+                const userRequested = await UserModel.findById({ _id: user});
+                if (!userRequested) {
+                    logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                    logger.addLog(logEntry);
+                    return res.status(HTTP_STATUS.NOT_FOUND).send(failure("User does not exist"));
+                }
+            }
+            
+            console.log(queryObject);
+            const transactions = await TransactionModel.find( queryObject )
+                .populate("books.book", "bookName rating")
                 .populate("user", "name")
-                // .populate("books.bookISBN")
-                .populate("books.book");
+                .sort({ "createdAt": -1 })
+                .skip(skipValue)
+                .limit(limit || defaultLimit);
             console.log(transactions);
             if (transactions.length > 0) {
+                logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.OK).send(
                     success("Successfully got all the transactions", {
                         transactions,
@@ -19,135 +57,48 @@ class Transaction {
                     })
                 );
             } else {
+                logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.OK).send(success("No transactions were found"));
             }
         } catch (error) {
             console.log(error);
+            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-                .send(failure("Internal server error from getAll"));
+                .send(failure("Internal server error while getting all transaction for a user"));
         }
     }
 
     async getById(req, res) {
+        routeAccess = '/transactions/:id';
         try {
             const { id } = req.params;
             const transaction = await TransactionModel.findOne({ _id: id })
                 .populate("user", "name")
-                .populate("books.book");
+                .populate("books.book", "bookName rating");
             console.log(transaction);
 
-            const transactedBooks = transaction.books;
-            console.log(transactedBooks);
-            var priceArr = [];
-            transactedBooks.forEach(function (data, index, jsonData) {
-                priceArr.push(data.book.price * data.quantity);
-            });
-            const totalPrice = priceArr.reduce(
-                (total, current) => total + current,
-                0
-            );
-            console.log(totalPrice);
-            const dummyTotal = { "Total price": totalPrice };
-            console.log(dummyTotal);
-
-            // const updatedTransaction = {...transactedBooks, ...dummyTotal};
-            const updatedTransaction = { ...transaction._doc, ...dummyTotal };
-            console.log(updatedTransaction);
-            if (updatedTransaction) {
+            if (!transaction) {
+                logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
                 return res
-                    .status(HTTP_STATUS.OK)
-                    .send(success("Successfully received the transaction", updatedTransaction));
-            } else {
-                return res
-                    .status(HTTP_STATUS.OK)
-                    .send(failure("Failed to received the transaction"));
+                    .status(HTTP_STATUS.NOT_FOUND)
+                    .send(failure("Transaction does not exist"));
             }
+            logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+            logger.addLog(logEntry);
+            return res.status(HTTP_STATUS.OK).send(success("Successfully got the transaction", cart));
         } catch (error) {
+            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-                .send(failure("Internal server error from getById"));
+                .send(failure("Internal server error while getting transaction"));
         }
     }
 
-
-    //   async create(req, res) {
-    //     try {
-    //       const { userId, cartId } = req.body;
-    //       const cart = await CartModel.findOne({ _id: cartId, user: userId });
-
-    //       if (!cart) {
-    //         return res
-    //           .status(HTTP_STATUS.NOT_FOUND)
-    //           .send(failure("Cart was not found for this user"));
-    //       }
-    //       const productsList = cart.products.map((element) => {
-    //         return element.product;
-    //       });
-
-    //       const productsInCart = await ProductModel.find({
-    //         _id: {
-    //           $in: productsList,
-    //         },
-    //       });
-
-    //       if (productsList.length !== productsInCart.length) {
-    //         return res
-    //           .status(HTTP_STATUS.NOT_FOUND)
-    //           .send(failure("All products in cart do not exist"));
-    //       }
-
-    //       productsInCart.forEach((product) => {
-    //         const productFound = cart.products.findIndex(
-    //           (cartItem) => String(cartItem.product._id) === String(product._id)
-    //         );
-    //         if (product.stock < cart.products[productFound].quantity) {
-    //           return res
-    //             .status(HTTP_STATUS.NOT_FOUND)
-    //             .send(
-    //               failure(
-    //                 "Unable to check out at this time, product does not exist"
-    //               )
-    //             );
-    //         }
-    //         product.stock -= cart.products[productFound].quantity;
-    //       });
-
-    //       const bulk = [];
-    //       productsInCart.map((element) => {
-    //         bulk.push({
-    //           updateOne: {
-    //             filter: { _id: element },
-    //             update: { $set: { stock: element.stock } },
-    //           },
-    //         });
-    //       });
-
-    //       const stockSave = await ProductModel.bulkWrite(bulk);
-    //       const newTransaction = await TransactionModel.create({
-    //         products: cart.products,
-    //         user: userId,
-    //         total: cart.total,
-    //       });
-
-    //       cart.products = [];
-    //       cart.total = 0;
-    //       const cartSave = await cart.save();
-
-    //       if (cartSave && stockSave && newTransaction) {
-    //         return res
-    //           .status(HTTP_STATUS.OK)
-    //           .send(success("Successfully checked out!", newTransaction));
-    //       }
-
-    //       return res.status(HTTP_STATUS.OK).send(failure("Something went wrong"));
-    //     } catch (error) {
-    //       console.log(error);
-    //       return res
-    //         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-    //         .send(failure("Internal server error"));
-    //     }
-    //   }
 }
 
 module.exports = new Transaction();

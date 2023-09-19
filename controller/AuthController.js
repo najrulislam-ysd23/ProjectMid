@@ -6,27 +6,36 @@ const { failure, success } = require("../util/common");
 const bcrypt = require("bcrypt");
 const jsonwebtoken = require('jsonwebtoken');
 const transporter = require("../middleware/Transporter");
+const logger = require("../middleware/logger");
+let logEntry;
+let routeAccess;
 
 
 
 class AuthController {
 
     async login(req, res) {
+        routeAccess = '/auth/login';
         try {
             // Checking if all the properties are valid in the request body
             const validation = validationResult(req).array();
             if (validation.length > 0) {
+                logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.UNPROCESSABLE_ENTITY).send(failure("Provide information correctly", validation));
             }
-
             const { email, password } = req.body;
             const existingUser = await AuthModel.findOne({ email: email })
             // Checking if the user has an account
             if (!existingUser) {
+                logEntry = `${routeAccess} | status: login before signup | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.OK).send(failure("Create an account first"));
             }
             // Checking if the user's account is verified
             if (!existingUser.verified) {
+                logEntry = `${routeAccess} | status: login before verification | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.OK).send(failure("Verify your email and then log in"));
             }
 
@@ -41,13 +50,18 @@ class AuthController {
 
                 const jwt = jsonwebtoken.sign(responseUserInfo, process.env.SECRET_KEY, { expiresIn: "1h" }); console.log(jwt);
                 responseUserInfo.token = jwt; console.log(responseUserInfo);
+                logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.OK).send(success("Successfully logged in", responseUserInfo));
             } else {
-
-                return res.status(HTTP_STATUS.OK).send(failure("Invalid credentials"));
+                logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
+                return res.status(HTTP_STATUS.OK).send(failure("Failed to login"));
             }
         }
         catch (error) {
+            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logger.addLog(logEntry);
             return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(failure("Internal server error"));
         }
     }
@@ -127,16 +141,21 @@ class AuthController {
 
 
     async signup(req, res) {
+        routeAccess = '/auth/signup';
         try {
             // Checking if all the properties are valid in the request body
             const validation = validationResult(req).array();
             if (validation.length > 0) {
+                logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.UNPROCESSABLE_ENTITY).send(failure("Provide information correctly", validation));
             }
 
             const { name, email, password, confirmPassword, role, age, area, city, country, balance } = req.body;
 
             if (password != confirmPassword) {
+                logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.OK).send(failure("Passwords did not match."));
             }
 
@@ -144,6 +163,8 @@ class AuthController {
             // Checking if the user already has an account
             if (existingUser) {
                 if (existingUser.verified) {
+                    logEntry = `${routeAccess} | status: signup conflict | timestamp: ${new Date().toLocaleString()}\n`;
+                    logger.addLog(logEntry);
                     return res.status(HTTP_STATUS.OK).send(failure("You have an account, please log in to access."));
                 } else {
                     await AuthModel.deleteOne({ email: email, verified: false });
@@ -161,6 +182,8 @@ class AuthController {
                 })
                 .catch((err) => {
                     console.log(err);
+                    logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                    logger.addLog(logEntry);
                     return res.status(HTTP_STATUS.UNPROCESSABLE_ENTITY).send(failure("Failed to signup"));
                 });
 
@@ -187,14 +210,20 @@ class AuthController {
                     //     html: `Click <a href = '${url}'>here</a> to confirm your email.`
                     // })
                     // return res.status(HTTP_STATUS.CREATED).send(success(`Sent a verification email to ${email}`));
+                    logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                    logger.addLog(logEntry);
                     return res.status(HTTP_STATUS.CREATED).send(success("Successfully signed up. Now you can log in."));
                 })
                 .catch((err) => {
                     console.log(err);
+                    logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                    logger.addLog(logEntry);
                     return res.status(HTTP_STATUS.UNPROCESSABLE_ENTITY).send(failure("Failed to signup"));
                 });
 
         } catch (error) {
+            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logger.addLog(logEntry);
             return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(failure("Internal server error"));
         }
     }

@@ -26,7 +26,7 @@ const cartSchema = new mongoose.Schema(
             type: String,
             default: function () {
                 const currentDate = new Date();
-                new Date().setDate(currentDate.getDate() + 3);
+                currentDate.setDate(currentDate.getDate() + 3);
                 return currentDate.toLocaleDateString();
             },
         },
