@@ -228,14 +228,14 @@ class Book {
             }
             if (price) {
                 console.log(price);
-                if(price<=0){
+                if (price <= 0) {
                     return res
                         .status(HTTP_STATUS.OK)
                         .send(failure("Price can not be zero"));
                 }
                 updateObject.price = price;
             }
-            
+
             if (stockInc && stockDec) {
                 return res
                     .status(HTTP_STATUS.NOT_ACCEPTABLE)
@@ -274,8 +274,47 @@ class Book {
         }
     }
 
+    async deleteBook(req, res) {
+        try {
+            console.log("executing deleteBook");
+            const validation = validationResult(req).array();
+            console.log(validation);
+            if (validation.length > 0) {
+                //   return res.status(422).send(failure("Invalid properties", validation));
+                return res
+                    .status(HTTP_STATUS.OK)
+                    .send(failure("Validation error", validation));
+            }
+            const { id } = req.body;
+            if (!id) {
+                return res
+                    .status(HTTP_STATUS.NOT_ACCEPTABLE)
+                    .send(failure("Provide book id to delete"));
+            }
+            let bookRequested = await BookModel.findOne({ _id: id });
+            if (!bookRequested) {
+                return res
+                    .status(HTTP_STATUS.NOT_FOUND)
+                    .send(success("User does not exist"));
+            }
+            const book = await BookModel.deleteOne({ _id: id });
 
-    
+            if (book) {
+                return res
+                    .status(HTTP_STATUS.ACCEPTED)
+                    .send(success("Successfully deleted the book"));
+            } else {
+                return res
+                    .status(HTTP_STATUS.NOT_FOUND)
+                    .send(failure("Failed to delete the book"));
+            }
+        } catch (error) {
+            return res
+                .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+                .send(failure("Internal server error while deleting book"));
+        }
+    }
+
 
 
 }

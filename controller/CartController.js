@@ -7,8 +7,34 @@ const { success, failure } = require("../util/common");
 const HTTP_STATUS = require("../constants/statusCodes");
 const { default: mongoose } = require("mongoose");
 const { ObjectId } = require("mongodb");
+const DiscountModel = require("../model/Discount");
+const moment = require('moment');
+
 
 class Cart {
+
+    async getCart(req, res) {
+        try {
+            const { userId } = req.params;
+            const user = await UserModel.findById({ _id: userId });
+            if (!user) {
+                return res.status(HTTP_STATUS.NOT_FOUND).send(failure("User does not exist"));
+            }
+            const cart = await CartModel.findOne({ user: userId }).populate("products.product");
+            if (!cart) {
+                return res
+                    .status(HTTP_STATUS.NOT_FOUND)
+                    .send(failure("Cart does not exist for user"));
+            }
+            return res.status(HTTP_STATUS.OK).send(success("Successfully got cart for user", cart));
+        } catch (error) {
+            console.log(error);
+            return res
+                .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+                .send(failure("Internal server error"));
+        }
+    }
+
     async addToCart(req, res) {
         try {
             const validation = validationResult(req).array();
@@ -46,6 +72,7 @@ class Cart {
                 // console.log(cart[0]);
                 console.log(cart.books);
                 let flag = false;
+
                 cart.books.forEach(function (data, index, jsonData) {
                     if (data.book == book) {
                         flag = true;
@@ -59,19 +86,38 @@ class Cart {
                         data.quantity = newQuantity;
                     }
                 });
+                let calculatedPrice = Number(bookRequested.price);
                 if (!flag) {
                     if (bookRequested.stock < quantity) {
                         return res
                             .status(HTTP_STATUS.OK)
                             .send(success("Book stock exceeded"));
                     }
+
+                    // const dateNow = new Date();
+                    const discountRequested = await DiscountModel.findOne({
+                        book: book
+                    });
+                    console.log(discountRequested);
+                    if (discountRequested) {
+                        const dateNowFormatted = moment(new Date()).format('DD-MM-YY HH:mm:ss');
+                        const dateNow = moment(dateNowFormatted, 'DD-MM-YY HH:mm:ss').toDate();
+                        const dateFrom = moment(discountRequested.discountFrom, 'DD-MM-YY HH:mm:ss').toDate();
+                        const dateExp = moment(discountRequested.discountExp, 'DD-MM-YY HH:mm:ss').toDate();
+                        console.log(dateNow, dateFrom, dateExp);
+                        if ((dateNow > dateFrom) && (dateNow < dateExp)) {
+                            console.log("executing here");
+                            const discounted = (calculatedPrice / 100) * Number(discountRequested.discountPercentage);
+                            calculatedPrice = calculatedPrice - discounted;
+                        }
+                    }
                     cart.books.push({
                         book,
                         quantity,
-                        price: bookRequested.price * quantity,
+                        price: calculatedPrice,
                     });
                 }
-                let bookPrice = Number(bookRequested.price) * Number(quantity);
+                let bookPrice = calculatedPrice * Number(quantity);
                 cart.total = bookPrice + cart.total;
 
                 await cart

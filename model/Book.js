@@ -40,6 +40,10 @@ const bookSchema = new Schema(
             min: 0,
             max: 5,
         },
+        ratingCount: {
+            type: Number,
+            min: 0,
+        },
 
 
 
