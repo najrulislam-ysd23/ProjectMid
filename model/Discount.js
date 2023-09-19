@@ -14,7 +14,7 @@ const discountSchema = new Schema(
             type: String,
             // default: moment(new Date()).format('DD-MM-YY HH:mm:ss'),
         },
-        discountTill: {
+        discountExp: {
             type: String,
             // default: moment(new Date()).format('DD-MM-YY HH:mm:ss'),
         },

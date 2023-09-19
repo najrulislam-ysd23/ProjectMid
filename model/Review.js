@@ -22,6 +22,10 @@ const reviewSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        verifiedTransaction: {
+            type: Boolean,
+            default: false,
+        },
     },
     { timestamps: true }
 );
