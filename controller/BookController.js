@@ -67,7 +67,7 @@ class Book {
                 queryObject.price = { [`$${priceCriteria}`]: price };
             } else if (priceCriteria && !price) {
                 logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
-                    logger.addLog(logEntry);
+                logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.BAD_REQUEST).send(failure("Invalid request for filtering price"));
             } else if (price && !priceCriteria) {
                 queryObject.price = { $eq: price };
@@ -77,7 +77,7 @@ class Book {
                 queryObject.rating = { [`$${ratingCriteria}`]: rating };
             } else if (ratingCriteria && !rating) {
                 logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
-                    logger.addLog(logEntry);
+                logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.BAD_REQUEST).send(failure("Invalid request for filter by rating"));
             } else if (rating && !ratingCriteria) {
                 queryObject.rating = { $eq: rating };
@@ -95,7 +95,7 @@ class Book {
                 queryObject.stock = { [`$${stockCriteria}`]: stock };
             } else if (stockCriteria && !stock) {
                 logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
-                    logger.addLog(logEntry);
+                logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.BAD_REQUEST).send(failure("Invalid request for filter by stock"));
             } else if (stock && !stockCriteria) {
                 queryObject.stock = { $eq: stock };
@@ -117,12 +117,12 @@ class Book {
                 .limit(limit || defaultLimit);
             if (pageBooks.length === 0) {
                 logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
-                    logger.addLog(logEntry);
+                logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.NOT_FOUND).send(failure("No books to show"));
             }
             const totalBooks = (await BookModel.find({})).length;
             logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
-                    logger.addLog(logEntry);
+            logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.OK)
                 .send(
@@ -137,7 +137,7 @@ class Book {
         } catch (error) {
             console.log(error);
             logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
-                    logger.addLog(logEntry);
+            logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
                 .send(failure("Internal server error"));
@@ -151,20 +151,20 @@ class Book {
             const book = await BookModel.findById({ _id: id });
             if (book) {
                 logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
-                    logger.addLog(logEntry);
+                logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.OK)
                     .send(success("Successfully received the book", book));
             } else {
                 logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
-                    logger.addLog(logEntry);
+                logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.OK)
                     .send(failure("Failed to received the book"));
             }
         } catch (error) {
             logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
-                    logger.addLog(logEntry);
+            logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
                 .send(failure("Internal server error from getById"));
@@ -200,7 +200,7 @@ class Book {
                 const existingBook = await BookModel.findOne({ bookISBN: bookISBN });
                 if (existingBook) {
                     logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
-                logger.addLog(logEntry);
+                    logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.OK)
                         .send(success("Book already exists"));
@@ -209,7 +209,7 @@ class Book {
                     .save()
                     .then((data) => {
                         logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
-                    logger.addLog(logEntry);
+                        logger.addLog(logEntry);
                         return res
                             .status(HTTP_STATUS.OK)
                             .send(success("Successfully added the book", data));
@@ -217,7 +217,7 @@ class Book {
                     .catch((err) => {
                         console.log(err);
                         logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
-                    logger.addLog(logEntry);
+                        logger.addLog(logEntry);
                         return res
                             .status(HTTP_STATUS.UNPROCESSABLE_ENTITY)
                             .send(failure("Failed to add the book"));
@@ -226,7 +226,7 @@ class Book {
         } catch (error) {
             console.log(error);
             logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
-                    logger.addLog(logEntry);
+            logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
                 .send(failure("Internal server error from add"));
@@ -268,7 +268,7 @@ class Book {
                 console.log(price);
                 if (price <= 0) {
                     logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
-                logger.addLog(logEntry);
+                    logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.OK)
                         .send(failure("Price can not be zero"));
@@ -288,7 +288,7 @@ class Book {
                     updateObject.stock = newStock;
                 } else {
                     logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
-                logger.addLog(logEntry);
+                    logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.NOT_ACCEPTABLE)
                         .send(failure("You can not increment stock more than 100 at once"));
@@ -310,16 +310,16 @@ class Book {
             console.log(updatedBook);
             if (updatedBook) {
                 logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
-                    logger.addLog(logEntry);
+                logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.OK).send(success("Successfully updated the book", updatedBook));
             } else {
                 logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
-                    logger.addLog(logEntry);
+                logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.NOT_FOUND).send(failure("Failed to update the book"));
             }
         } catch (error) {
             logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
-                    logger.addLog(logEntry);
+            logger.addLog(logEntry);
             return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(failure("Internal server error while updating book"));
         }
     }
@@ -358,20 +358,20 @@ class Book {
 
             if (book) {
                 logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
-                    logger.addLog(logEntry);
+                logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.ACCEPTED)
                     .send(success("Successfully deleted the book"));
             } else {
                 logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
-                    logger.addLog(logEntry);
+                logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.NOT_FOUND)
                     .send(failure("Failed to delete the book"));
             }
         } catch (error) {
             logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
-                    logger.addLog(logEntry);
+            logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
                 .send(failure("Internal server error while deleting book"));
