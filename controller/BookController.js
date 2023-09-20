@@ -5,15 +5,13 @@ const { success, failure } = require("../util/common");
 const HTTP_STATUS = require("../constants/statusCodes");
 const logger = require("../middleware/logger");
 let logEntry;
-let routeAccess;
 
 class Book {
     async getBooks(req, res) {
-        routeAccess = '/books/all';
         try {
             const validation = validationResult(req).array();
             if (validation.length > 0) {
-                logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.OK)
@@ -60,13 +58,13 @@ class Book {
             }
 
             if (genre) {
-                queryObject.genre = genre.toLowerCase();
+                queryObject.genre = { $regex: genre, $options: "i" };
             }
 
             if (price && priceCriteria) {
                 queryObject.price = { [`$${priceCriteria}`]: price };
             } else if (priceCriteria && !price) {
-                logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.BAD_REQUEST).send(failure("Invalid request for filtering price"));
             } else if (price && !priceCriteria) {
@@ -76,7 +74,7 @@ class Book {
             if (rating && ratingCriteria) {
                 queryObject.rating = { [`$${ratingCriteria}`]: rating };
             } else if (ratingCriteria && !rating) {
-                logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.BAD_REQUEST).send(failure("Invalid request for filter by rating"));
             } else if (rating && !ratingCriteria) {
@@ -94,7 +92,7 @@ class Book {
             if (stock && stockCriteria) {
                 queryObject.stock = { [`$${stockCriteria}`]: stock };
             } else if (stockCriteria && !stock) {
-                logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.BAD_REQUEST).send(failure("Invalid request for filter by stock"));
             } else if (stock && !stockCriteria) {
@@ -116,12 +114,17 @@ class Book {
                 .skip(skipValue)
                 .limit(limit || defaultLimit);
             if (pageBooks.length === 0) {
-                logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.NOT_FOUND).send(failure("No books to show"));
             }
-            const totalBooks = (await BookModel.find({})).length;
-            logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+            const totalBooks = await BookModel.find(queryObject)
+            .or([
+                { bookName: { $regex: search, $options: "i" } },
+                { description: { $regex: search, $options: "i" } },
+            ])
+            .countDocuments();
+            logEntry = `${req.url} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
             logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.OK)
@@ -136,7 +139,7 @@ class Book {
                 );
         } catch (error) {
             console.log(error);
-            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logEntry = `${req.url} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
             logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -145,25 +148,25 @@ class Book {
     }
 
     async getOneBook(req, res) {
-        routeAccess = '/books/book/:id';
+        req.url = '/books/book/:id';
         try {
             const id = req.params.id;
             const book = await BookModel.findById({ _id: id });
             if (book) {
-                logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.OK)
                     .send(success("Successfully received the book", book));
             } else {
-                logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.OK)
                     .send(failure("Failed to received the book"));
             }
         } catch (error) {
-            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logEntry = `${req.url} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
             logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -173,12 +176,11 @@ class Book {
 
     // using express-validator
     async addBook(req, res) {
-        routeAccess = '/books/add';
         try {
             const validation = validationResult(req).array();
             console.log(validation);
             if (validation.length > 0) {
-                logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 //   return res.status(422).send(failure("Invalid properties", validation));
                 return res
@@ -199,7 +201,7 @@ class Book {
                 });
                 const existingBook = await BookModel.findOne({ bookISBN: bookISBN });
                 if (existingBook) {
-                    logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.OK)
@@ -208,7 +210,7 @@ class Book {
                 await book
                     .save()
                     .then((data) => {
-                        logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                        logEntry = `${req.url} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
                         logger.addLog(logEntry);
                         return res
                             .status(HTTP_STATUS.OK)
@@ -216,7 +218,7 @@ class Book {
                     })
                     .catch((err) => {
                         console.log(err);
-                        logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                        logEntry = `${req.url} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
                         logger.addLog(logEntry);
                         return res
                             .status(HTTP_STATUS.UNPROCESSABLE_ENTITY)
@@ -225,7 +227,7 @@ class Book {
             }
         } catch (error) {
             console.log(error);
-            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logEntry = `${req.url} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
             logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -234,21 +236,29 @@ class Book {
     }
 
     async updateBook(req, res) {
-        routeAccess = '/books/book/update';
         try {
+            const validation = validationResult(req).array();
+            if (validation.length > 0) {
+                logEntry = `${req.url} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                logger.addLog(logEntry);
+                return res
+                    .status(HTTP_STATUS.OK)
+                    .send(failure("Invalid property input", validation));
+            }
+
             const { id, bookName, description, author, genre, price, stockInc, stockDec } = req.body;
             let updateObject = {};
 
             let bookRequested = await BookModel.findOne({ _id: id });
             if (!bookRequested) {
-                logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.NOT_FOUND)
                     .send(success("Book does not exist"));
             }
             if (!bookName && !description && !author && !genre && !price && !stockInc && stockDec) {
-                logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.NOT_ACCEPTABLE).send(failure("Provide valid property/s to update book"));
             }
@@ -267,7 +277,7 @@ class Book {
             if (price) {
                 console.log(price);
                 if (price <= 0) {
-                    logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.OK)
@@ -277,7 +287,7 @@ class Book {
             }
 
             if (stockInc && stockDec) {
-                logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.NOT_ACCEPTABLE)
@@ -287,7 +297,7 @@ class Book {
                 if (stockInc <= 100) {
                     updateObject.stock = newStock;
                 } else {
-                    logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.NOT_ACCEPTABLE)
@@ -309,29 +319,27 @@ class Book {
             );
             console.log(updatedBook);
             if (updatedBook) {
-                logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
-                return res.status(HTTP_STATUS.OK).send(success("Successfully updated the book", updatedBook));
+                return res.status(HTTP_STATUS.OK).send(success("Successfully updated the book"));
             } else {
-                logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.NOT_FOUND).send(failure("Failed to update the book"));
             }
         } catch (error) {
-            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logEntry = `${req.url} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
             logger.addLog(logEntry);
             return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(failure("Internal server error while updating book"));
         }
     }
 
     async deleteBook(req, res) {
-        routeAccess = '/books/book/delete';
         try {
-            console.log("executing deleteBook");
             const validation = validationResult(req).array();
             console.log(validation);
             if (validation.length > 0) {
-                logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 //   return res.status(422).send(failure("Invalid properties", validation));
                 return res
@@ -340,7 +348,7 @@ class Book {
             }
             const { id } = req.body;
             if (!id) {
-                logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.NOT_ACCEPTABLE)
@@ -348,7 +356,7 @@ class Book {
             }
             let bookRequested = await BookModel.findOne({ _id: id });
             if (!bookRequested) {
-                logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.NOT_FOUND)
@@ -357,20 +365,20 @@ class Book {
             const book = await BookModel.deleteOne({ _id: id });
 
             if (book) {
-                logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.ACCEPTED)
                     .send(success("Successfully deleted the book"));
             } else {
-                logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.NOT_FOUND)
                     .send(failure("Failed to delete the book"));
             }
         } catch (error) {
-            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logEntry = `${req.url} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
             logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)

@@ -26,9 +26,9 @@ app.use("/auth", AuthRouter);
 app.use("/users", UserRouter);
 app.use("/books", BookRouter);
 app.use("/transactions", TransactionRouter);
-app.use("/cart", CartRouter);
-app.use("/review", ReviewRouter);
-app.use("/discount", DiscountRouter);
+app.use("/carts", CartRouter);
+app.use("/reviews", ReviewRouter);
+app.use("/discounts", DiscountRouter);
 
 
 // NO-ROUTE MATCHED

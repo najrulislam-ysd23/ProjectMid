@@ -5,11 +5,9 @@ const { success, failure } = require("../util/common");
 const HTTP_STATUS = require("../constants/statusCodes");
 const logger = require("../middleware/logger");
 let logEntry;
-let routeAccess;
 
 class Transaction {
     async getAll(req, res) {
-        routeAccess = '/transactions/all';
         try {
             const { user, page, limit,  } = req.query;
             const defaultPage = 1;
@@ -33,7 +31,7 @@ class Transaction {
                 queryObject.user = user;
                 const userRequested = await UserModel.findById({ _id: user});
                 if (!userRequested) {
-                    logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res.status(HTTP_STATUS.NOT_FOUND).send(failure("User does not exist"));
                 }
@@ -48,7 +46,7 @@ class Transaction {
                 .limit(limit || defaultLimit);
             console.log(transactions);
             if (transactions.length > 0) {
-                logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.OK).send(
                     success("Successfully got all the transactions", {
@@ -57,13 +55,13 @@ class Transaction {
                     })
                 );
             } else {
-                logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.OK).send(success("No transactions were found"));
             }
         } catch (error) {
             console.log(error);
-            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logEntry = `${req.url} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
             logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -72,7 +70,6 @@ class Transaction {
     }
 
     async getById(req, res) {
-        routeAccess = '/transactions/:id';
         try {
             const { id } = req.params;
             const transaction = await TransactionModel.findOne({ _id: id })
@@ -81,17 +78,17 @@ class Transaction {
             console.log(transaction);
 
             if (!transaction) {
-                logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.NOT_FOUND)
                     .send(failure("Transaction does not exist"));
             }
-            logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+            logEntry = `${req.url} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
             logger.addLog(logEntry);
-            return res.status(HTTP_STATUS.OK).send(success("Successfully got the transaction", cart));
+            return res.status(HTTP_STATUS.OK).send(success("Successfully got the transaction", transaction));
         } catch (error) {
-            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logEntry = `${req.url} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
             logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)

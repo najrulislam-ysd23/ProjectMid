@@ -7,16 +7,14 @@ const { success, failure } = require("../util/common");
 const HTTP_STATUS = require("../constants/statusCodes");
 const logger = require("../middleware/logger");
 let logEntry;
-let routeAccess;
 
 class ReviewController {
     async getReviews(req, res) {
-        routeAccess = '/review/get-review';
         try {
             const validation = validationResult(req).array();
             console.log(validation);
             if (validation.length > 0) {
-                logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.OK)
@@ -26,7 +24,7 @@ class ReviewController {
                 let bookRequested = await BookModel.findOne({ _id: book });
 
                 if (!bookRequested) {
-                    logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.OK)
@@ -39,7 +37,7 @@ class ReviewController {
 
                 console.log(allReviews);
                 if (allReviews.length > 0) {
-                    logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res.status(HTTP_STATUS.OK).send(
                         success("Successfully got all the reviews", {
@@ -48,7 +46,7 @@ class ReviewController {
                         })
                     );
                 } else {
-                    logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res.status(HTTP_STATUS.OK).send(success("No review found"));
                 }
@@ -59,7 +57,7 @@ class ReviewController {
                 //   },
                 //   {
                 //     $project: {
-                //       totalRating: { $avg: "$rating" }, // Calculate the total sales for each brand
+                //       totalRating: { $avg: "$rating" }, 
                 //     },
                 //   },
                 // ])
@@ -73,7 +71,7 @@ class ReviewController {
             }
         } catch (error) {
             console.log(error);
-            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logEntry = `${req.url} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
             logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -82,12 +80,11 @@ class ReviewController {
     }
 
     async addReview(req, res) {
-        routeAccess = '/review/add-review';
         try {
             const validation = validationResult(req).array();
             console.log(validation);
             if (validation.length > 0) {
-                logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.OK)
@@ -96,7 +93,7 @@ class ReviewController {
                 const { user, book, rating, review } = req.body;
                 let userRequested = await UserModel.findOne({ _id: user });
                 if (!userRequested) {
-                    logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.OK)
@@ -104,7 +101,7 @@ class ReviewController {
                 }
                 let bookRequested = await BookModel.findOne({ _id: book });
                 if (!bookRequested) {
-                    logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.OK)
@@ -115,7 +112,7 @@ class ReviewController {
                     user: user,
                 });
                 if (existingReview) {
-                    logEntry = `${routeAccess} | status: redirect request | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: redirect request | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.MISDIRECTED_REQUEST)
@@ -139,13 +136,12 @@ class ReviewController {
                     rating,
                     review,
                     verifiedTransaction,
-                });
+                });console.log(reviewData);
                 const reviewCount = bookRequested.ratingCount;
-                // const reviewCount = await ReviewModel.find({
-                //     book: book,
-                // }).countDocuments();
-                if (reviewCount === 0) {
+
+                if (!reviewCount || reviewCount === 0) {
                     bookRequested.rating = rating;
+                    bookRequested.ratingCount = 1;
                 } else {
                     bookRequested.rating = ((bookRequested.rating * reviewCount) + rating) / (reviewCount + 1);
                     bookRequested.ratingCount += 1;
@@ -158,7 +154,7 @@ class ReviewController {
                     .then((data) => {
                         data["updatedRating"] = bookRequested.rating;
                         console.log(data);
-                        logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                        logEntry = `${req.url} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
                         logger.addLog(logEntry);
                         return res
                             .status(HTTP_STATUS.OK)
@@ -166,7 +162,7 @@ class ReviewController {
                     })
                     .catch((err) => {
                         console.log(err);
-                        logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                        logEntry = `${req.url} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
                         logger.addLog(logEntry);
                         return res
                             .status(HTTP_STATUS.UNPROCESSABLE_ENTITY)
@@ -175,7 +171,7 @@ class ReviewController {
             }
         } catch (error) {
             console.log(error);
-            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logEntry = `${req.url} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
             logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -184,13 +180,12 @@ class ReviewController {
     }
 
     async updateReview(req, res) {
-        routeAccess = '/review/update-review';
         try {
             console.log("executing updateUser");
             const validation = validationResult(req).array();
             console.log(validation);
             if (validation.length > 0) {
-                logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.OK)
@@ -200,7 +195,7 @@ class ReviewController {
             const { user, book, review } = req.body;
             let userRequested = await UserModel.findOne({ _id: user });
             if (!userRequested) {
-                logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.OK)
@@ -208,7 +203,7 @@ class ReviewController {
             }
             let bookRequested = await BookModel.findOne({ _id: book });
             if (!bookRequested) {
-                logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.OK)
@@ -223,27 +218,27 @@ class ReviewController {
                     { $set: { review: review } });
 
                 if (updatedReview) {
-                    logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.ACCEPTED)
                         .send(success("Successfully updated the review"));
                 } else {
-                    logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.NOT_FOUND)
                         .send(failure("Failed to updated the review"));
                 }
             } else {
-                logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.NOT_FOUND)
                     .send(failure("No review found for the book of this user"));
             }
         } catch (error) {
-            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logEntry = `${req.url} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -253,11 +248,10 @@ class ReviewController {
 
     async deleteReview(req, res) {
         try {
-            routeAccess = '/review/delete-review';
             const validation = validationResult(req).array();
             console.log(validation);
             if (validation.length > 0) {
-                logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.OK)
@@ -266,7 +260,7 @@ class ReviewController {
             const { user, book } = req.body;
             let userRequested = await UserModel.findOne({ _id: user });
             if (!userRequested) {
-                logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.OK)
@@ -274,7 +268,7 @@ class ReviewController {
             }
             let bookRequested = await BookModel.findOne({ _id: book });
             if (!bookRequested) {
-                logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.OK)
@@ -302,27 +296,27 @@ class ReviewController {
                     }
                     // console.log(bookRequested);
                     await bookRequested.save();
-                    logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.ACCEPTED)
                         .send(success("Successfully deleted the review"));
                 } else {
-                    logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.NOT_FOUND)
                         .send(failure("Failed to delete the review"));
                 }
             } else {
-                logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.NOT_FOUND)
                     .send(failure("No review found for the book of this user"));
             }
         } catch (error) {
-            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logEntry = `${req.url} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
             logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
