@@ -9,7 +9,7 @@ let logEntry;
 class Transaction {
     async getAll(req, res) {
         try {
-            const { user, page, limit,  } = req.query;
+            const { user, page, limit } = req.query;
             const defaultPage = 1;
             const defaultLimit = 10;
 
@@ -26,15 +26,15 @@ class Transaction {
                     skipValue = (defaultPage - 1) * limit;
                 }
             }
-            let queryObject = {};
+            let queryObject = {}; 
             if(user) {
-                queryObject.user = user;
                 const userRequested = await UserModel.findById({ _id: user});
                 if (!userRequested) {
                     logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res.status(HTTP_STATUS.NOT_FOUND).send(failure("User does not exist"));
                 }
+                queryObject.user = user;
             }
             
             console.log(queryObject);
@@ -50,6 +50,8 @@ class Transaction {
                 logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.OK).send(
                     success("Successfully got all the transactions", {
+                        pageNo: Number(pageNumber),
+                        limit: Number(limit),
                         transactions,
                         total: transactions.length,
                     })

@@ -91,8 +91,6 @@ const validator = {
             .withMessage("Country have to be a string")
             .bail(),
         body("balance")
-            .isNumeric()
-            .withMessage("Enter a valid balance")
             .custom((value, { req, res }) => {
                 if (value < 0) {
                     throw new Error("Balance should be positive");
@@ -166,8 +164,8 @@ const validator = {
             .isLength({ min: 1 })
             .withMessage("Book title must be at least 1 characters long")
             .bail()
-            .isLength({ max: 50 })
-            .withMessage("Book title can be maximum 50 characters long")
+            .isLength({ max: 100 })
+            .withMessage("Book title can be maximum 100 characters long")
             .bail()
             .custom((value, { req, res }) => {
                 console.log(value);
@@ -183,11 +181,11 @@ const validator = {
             .isString()
             .withMessage("Book description must be a string")
             .bail()
-            .isLength({ min: 20 })
+            .isLength({ min: 30 })
             .withMessage("Book description must be at least 30 characters long")
             .bail()
-            .isLength({ max: 100 })
-            .withMessage("Book description can be maximum 100 characters long"),
+            .isLength({ max: 500 })
+            .withMessage("Book description can be maximum 500 characters long"),
         body("author")
             .exists()
             .withMessage("Book name must be specified")
@@ -210,8 +208,8 @@ const validator = {
             .isLength({ min: 1 })
             .withMessage("Book genre must be at least 1 characters long")
             .bail()
-            .isLength({ max: 50 })
-            .withMessage("Book genre can be maximum 50 characters long"),
+            .isLength({ max: 100 })
+            .withMessage("Book genre can be maximum 100 characters long"),
         body("price")
             .exists()
             .withMessage("Book price must be specified")

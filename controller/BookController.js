@@ -18,7 +18,7 @@ class Book {
                     .send(failure("Invalid property input", validation));
             }
 
-            let { page, limit, bookName, description, price, priceCriteria, rating, ratingCriteria, stock, stockCriteria, discountPercentage, discountCriteria, author, genre, search, sortParam, sortOrder } = req.query;
+            let { page, limit, price, priceCriteria, rating, ratingCriteria, stock, stockCriteria, author, genre, search, sortParam, sortOrder } = req.query;
 
             const defaultPage = 1;
             const defaultLimit = 10;
@@ -112,7 +112,8 @@ class Book {
                 ])
                 .sort(sortObject)
                 .skip(skipValue)
-                .limit(limit || defaultLimit);
+                .limit(limit || defaultLimit)
+                .select("-updatedAt");
             if (pageBooks.length === 0) {
                 logEntry = `${req.url} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
@@ -151,7 +152,7 @@ class Book {
         req.url = '/books/book/:id';
         try {
             const id = req.params.id;
-            const book = await BookModel.findById({ _id: id });
+            const book = await BookModel.findById({ _id: id }).select("-updatedAt");;
             if (book) {
                 logEntry = `${req.url} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);

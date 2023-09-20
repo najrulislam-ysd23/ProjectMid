@@ -148,7 +148,7 @@ class AuthController {
                 return res.status(HTTP_STATUS.UNPROCESSABLE_ENTITY).send(failure("Provide information correctly", validation));
             }
 
-            const { name, email, password, confirmPassword, role, age, area, city, country, balance } = req.body;
+            const { name, email, password, confirmPassword, role, age, area, city, country} = req.body;
 
             if (password != confirmPassword) {
                 logEntry = `${req.url} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
@@ -170,7 +170,7 @@ class AuthController {
             }
             // Creating user instance
             const address = { area, city, country };
-            const user = new UserModel({ name, email, role, age, address, balance });
+            const user = new UserModel({ name, email, role, age, address});
             console.log(user, user.address);
             await user
                 .save()
