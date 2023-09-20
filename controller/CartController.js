@@ -182,7 +182,7 @@ class Cart {
                     .status(HTTP_STATUS.OK)
                     .send(failure("Failed to remove from cart", validation));
             } else {
-                const { user, book, quantity } = req.body;
+                let { user, book, quantity } = req.body;
 
                 let cart = await CartModel.findOne({ user: user, checkoutStatus: 0 });
                 if (!cart) {
@@ -329,6 +329,7 @@ class Cart {
                             );
                     }
                     calculatedPrice = cart.books[bookFound].price;
+                    console.log(calculatedPrice);
                     if (book.price > cart.books[bookFound].price) {
                         console.log(discountRequested);
                         discountRequested.forEach((disc) => {
