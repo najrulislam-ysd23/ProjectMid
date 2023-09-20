@@ -32,16 +32,19 @@ const bookSchema = new Schema(
         },
         stock: {
             type: Number,
-            min: 1,
+            default:0,
+            min: 0,
             max: 1000,
         },
         rating: {
             type: Number,
+            default:0,
             min: 0,
             max: 5,
         },
         ratingCount: {
             type: Number,
+            default:0,
             min: 0,
         },
 

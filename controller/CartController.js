@@ -11,17 +11,15 @@ const DiscountModel = require("../model/Discount");
 const moment = require('moment');
 const logger = require("../middleware/logger");
 let logEntry;
-let routeAccess;
 
 
 class Cart {
     async getCart(req, res) {
-        routeAccess = '/cart/:id';
         try {
             const { userId } = req.params;
             const user = await UserModel.findById({ _id: userId });
             if (!user) {
-                logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.NOT_FOUND).send(failure("User does not exist"));
             }
@@ -29,18 +27,18 @@ class Cart {
                 .populate("books.book", "bookName price rating")
                 .populate("user", "name");
             if (!cart) {
-                logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.NOT_FOUND)
                     .send(failure("Cart does not exist for user"));
             }
-            logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+            logEntry = `${req.url} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
             logger.addLog(logEntry);
             return res.status(HTTP_STATUS.OK).send(success("Successfully got cart for user", cart));
         } catch (error) {
             console.log(error);
-            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logEntry = `${req.url} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
             logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -49,12 +47,11 @@ class Cart {
     }
 
     async addToCart(req, res) {
-        routeAccess = '/cart/add-to-cart';
         try {
             const validation = validationResult(req).array();
             // console.log(validation);
             if (validation.length > 0) {
-                logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 //   return res.status(422).send(failure("Invalid properties", validation));
                 return res
@@ -65,7 +62,7 @@ class Cart {
                 var userId = new mongoose.Types.ObjectId(user);
                 let userRequested = await UserModel.findOne({ _id: userId });
                 if (!userRequested) {
-                    logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.OK)
@@ -74,7 +71,7 @@ class Cart {
                 var bookId = new mongoose.Types.ObjectId(book);
                 let bookRequested = await BookModel.findOne({ _id: bookId });
                 if (!bookRequested) {
-                    logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.OK)
@@ -100,7 +97,7 @@ class Cart {
                         let newQuantity = data.quantity + quantity;
 
                         if (bookRequested.stock < newQuantity) {
-                            logEntry = `${routeAccess} | status: resource exceeded | timestamp: ${new Date().toLocaleString()}\n`;
+                            logEntry = `${req.url} | status: resource exceeded | timestamp: ${new Date().toLocaleString()}\n`;
                             logger.addLog(logEntry);
                             return res
                                 .status(HTTP_STATUS.OK)
@@ -113,7 +110,7 @@ class Cart {
 
                 if (!flag) {
                     if (bookRequested.stock < quantity) {
-                        logEntry = `${routeAccess} | status: resource exceeded | timestamp: ${new Date().toLocaleString()}\n`;
+                        logEntry = `${req.url} | status: resource exceeded | timestamp: ${new Date().toLocaleString()}\n`;
                         logger.addLog(logEntry);
                         return res
                             .status(HTTP_STATUS.OK)
@@ -148,7 +145,7 @@ class Cart {
                 await cart
                     .save()
                     .then((data) => {
-                        logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                        logEntry = `${req.url} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
                         logger.addLog(logEntry);
                         return res
                             .status(HTTP_STATUS.CREATED)
@@ -156,7 +153,7 @@ class Cart {
                     })
                     .catch((err) => {
                         console.log(err);
-                        logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                        logEntry = `${req.url} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
                         logger.addLog(logEntry);
                         return res
                             .status(HTTP_STATUS.UNPROCESSABLE_ENTITY)
@@ -165,7 +162,7 @@ class Cart {
             }
         } catch (error) {
             console.log(error);
-            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logEntry = `${req.url} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
             logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -174,12 +171,11 @@ class Cart {
     }
 
     async removeFromCart(req, res) {
-        routeAccess = '/cart/remove-from-cart';
         try {
             const validation = validationResult(req).array();
             // console.log(validation);
             if (validation.length > 0) {
-                logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 //   return res.status(422).send(failure("Invalid properties", validation));
                 return res
@@ -190,7 +186,7 @@ class Cart {
 
                 let cart = await CartModel.findOne({ user: user, checkoutStatus: 0 });
                 if (!cart) {
-                    logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.OK)
@@ -220,7 +216,7 @@ class Cart {
                 });
 
                 if (!flag) {
-                    logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.OK)
@@ -231,7 +227,7 @@ class Cart {
                 await cart
                     .save()
                     .then((data) => {
-                        logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                        logEntry = `${req.url} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
                         logger.addLog(logEntry);
                         return res
                             .status(HTTP_STATUS.ACCEPTED)
@@ -239,7 +235,7 @@ class Cart {
                     })
                     .catch((err) => {
                         console.log(err);
-                        logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                        logEntry = `${req.url} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
                         logger.addLog(logEntry);
                         return res
                             .status(HTTP_STATUS.UNPROCESSABLE_ENTITY)
@@ -248,7 +244,7 @@ class Cart {
             }
         } catch (error) {
             console.log(error);
-            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logEntry = `${req.url} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
             logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -257,12 +253,11 @@ class Cart {
     }
 
     async checkoutCart(req, res) {
-        routeAccess = '/cart/checkout-cart';
         try {
             const validation = validationResult(req).array();
             // console.log(validation);
             if (validation.length > 0) {
-                logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 //   return res.status(422).send(failure("Invalid properties", validation));
                 return res
@@ -273,7 +268,7 @@ class Cart {
                 const cart = await CartModel.findOne({ _id: cartId });
 
                 if (!cart) {
-                    logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.NOT_FOUND)
@@ -282,7 +277,7 @@ class Cart {
                 if (cart.checkoutStatus) {
                     cart.toObject;
                     delete cart.checkoutStatus;
-                    logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.OK)
@@ -291,7 +286,7 @@ class Cart {
                 const user = await UserModel.findOne({ _id: cart.user });
                 console.log(cart.total, user.balance);
                 if (cart.total > user.balance) {
-                    logEntry = `${routeAccess} | status: failure due to exceeded resource | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: failure due to exceeded resource | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.OK)
@@ -308,7 +303,7 @@ class Cart {
                 });
 
                 if (booksList.length !== booksInCart.length) {
-                    logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.NOT_FOUND)
@@ -323,7 +318,7 @@ class Cart {
                         (cartItem) => String(cartItem.book._id) === String(book._id)
                     );
                     if (book.stock < cart.books[bookFound].quantity) {
-                        logEntry = `${routeAccess} | status: failure due to exceeded resource | timestamp: ${new Date().toLocaleString()}\n`;
+                        logEntry = `${req.url} | status: failure due to exceeded resource | timestamp: ${new Date().toLocaleString()}\n`;
                         logger.addLog(logEntry);
                         return res
                             .status(HTTP_STATUS.NOT_FOUND)
@@ -381,19 +376,19 @@ class Cart {
                 const balanceSave = await user.save();
 
                 if (balanceSave && cartSave && stockSave && newTransaction) {
-                    logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.OK)
                         .send(success("Successfully checked out!", cartSave));
                 }
-                logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res.status(HTTP_STATUS.OK).send(failure("Something went wrong"));
             }
         } catch (error) {
             console.log(error);
-            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logEntry = `${req.url} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
             logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)

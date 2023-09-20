@@ -118,62 +118,6 @@ const validator = {
             .bail(),
     ],
 
-    createUser: [
-        body("name")
-            .exists()
-            .withMessage("Name must be specified")
-            .bail()
-            .isString()
-            .withMessage("Name have to be a string")
-            .bail()
-            .custom((value, { req, res }) => {
-                console.log(value);
-                if (value.length <= 0) {
-                    throw new Error("Name cannot be blank");
-                }
-                return true;
-            }),
-        body("email")
-            .isLength({ min: 1 })
-            .trim()
-            .withMessage("Email must be specified")
-            .bail()
-            .isEmail()
-            .withMessage("Enter a valid email")
-            .bail(),
-        body("role").custom((value, { req, res }) => {
-            if (value) {
-                if (
-                    !(value === "admin" || value === "customer" || value === "supplier")
-                ) {
-                    throw new Error("Invalid role input");
-                }
-            }
-            return true;
-        }),
-        body("age")
-            .exists()
-            .withMessage("Age must be specified")
-            .bail()
-            .isNumeric()
-            .withMessage("Enter a valid age")
-            .custom((value, { req, res }) => {
-                if (value < 18) {
-                    throw new Error("You do not meet the minimum age requirement");
-                } else if (value > 120) {
-                    throw new Error("Are you still alive for real?");
-                }
-                return true;
-            }),
-        body("address")
-            .exists()
-            .withMessage("Address must be specified")
-            .bail()
-            .isString()
-            .withMessage("Address have to be a string")
-            .bail(),
-    ],
-
     isValidEmail: [
         body("email")
             .exists()
@@ -206,7 +150,12 @@ const validator = {
             .isLength({ min: 1 })
             .trim()
             .withMessage("Book ISBN must be specified")
-            .bail(),
+            .bail()
+            .isLength({ min: 13 })
+            .withMessage("Book ISBN must be 13 characters long")
+            .bail()
+            .isLength({ max: 13 })
+            .withMessage("Book ISBN must be 13 characters long"),
         body("bookName")
             .exists()
             .withMessage("Book name must be specified")
@@ -215,7 +164,10 @@ const validator = {
             .withMessage("Book name have to be a string")
             .bail()
             .isLength({ min: 1 })
-            .withMessage("Product title must be at least 1 characters long")
+            .withMessage("Book title must be at least 1 characters long")
+            .bail()
+            .isLength({ max: 50 })
+            .withMessage("Book title can be maximum 50 characters long")
             .bail()
             .custom((value, { req, res }) => {
                 console.log(value);
@@ -226,29 +178,52 @@ const validator = {
             }),
         body("description")
             .exists()
-            .withMessage("Product description must be provided")
+            .withMessage("Book description must be provided")
             .bail()
             .isString()
-            .withMessage("Product description must be a string")
+            .withMessage("Book description must be a string")
             .bail()
-            .isLength({ min: 10 })
-            .withMessage("Product description must be at least 30 characters long"),
+            .isLength({ min: 20 })
+            .withMessage("Book description must be at least 30 characters long")
+            .bail()
+            .isLength({ max: 100 })
+            .withMessage("Book description can be maximum 100 characters long"),
         body("author")
             .exists()
             .withMessage("Book name must be specified")
-            .bail(),
+            .bail()
+            .isString()
+            .withMessage("Book author must be a string")
+            .bail()
+            .isLength({ min: 1 })
+            .withMessage("Book author must be at least 1 characters long")
+            .bail()
+            .isLength({ max: 50 })
+            .withMessage("Book author can be maximum 50 characters long"),
         body("genre")
             .exists()
-            .withMessage("Book name must be specified")
-            .bail(),
+            .withMessage("Book genre must be specified")
+            .bail()
+            .isString()
+            .withMessage("Book genre must be a string")
+            .bail()
+            .isLength({ min: 1 })
+            .withMessage("Book genre must be at least 1 characters long")
+            .bail()
+            .isLength({ max: 50 })
+            .withMessage("Book genre can be maximum 50 characters long"),
         body("price")
             .exists()
-            .withMessage("Book name must be specified")
-            .bail(),
+            .withMessage("Book price must be specified")
+            .bail()
+            .isNumeric()
+            .withMessage("Book price must be number"),
         body("stock")
             .exists()
-            .withMessage("Book name must be specified")
-            .bail(),
+            .withMessage("Book stock must be specified")
+            .bail()
+            .isNumeric()
+            .withMessage("Book stock must be number"),
 
     ],
 
@@ -341,52 +316,6 @@ const validator = {
             }),
     ],
 
-    getUsersQuery: [
-        query("page").custom((value, { req, res }) => {
-            if (value) {
-                if (isNaN(Number(value))) {
-                    throw new Error("Page have to be a number");
-                }
-            }
-            return true;
-        }),
-        query("limit").custom((value, { req, res }) => {
-            if (value) {
-                if (isNaN(Number(value))) {
-                    throw new Error("Limit have to be a number");
-                }
-            }
-            return true;
-        }),
-
-        query("age").custom((value, { req, res }) => {
-            if (value) {
-                if (isNaN(Number(value))) {
-                    throw new Error("Stock have to be a number");
-                }
-            }
-            return true;
-        }),
-
-        query("ageCriteria").custom((value, { req, res }) => {
-            if (value) {
-                if (
-                    !(
-                        value === "gt" ||
-                        value === "gte" ||
-                        value === "lt" ||
-                        value === "lte" ||
-                        value === "eq" ||
-                        value === "ne"
-                    )
-                ) {
-                    throw new Error("Enter a criteria for stock");
-                }
-            }
-            return true;
-        }),
-    ],
-
 
     booksQuery: [
         query("page").custom((value, { req, res }) => {
@@ -401,6 +330,24 @@ const validator = {
             if (value) {
                 if (isNaN(Number(value))) {
                     throw new Error("Limit have to be a number");
+                }
+            }
+            return true;
+        }),
+
+        query("author").custom((value, { req, res }) => {
+            if (value) {
+                if (!/^[A-Za-z]*[.]*[A-Za-z]*$/.test(value)) {
+                    throw new Error("Author must contain only alphabetic characters (periods are optional)");
+                }
+            }
+            return true;
+        }),
+
+        query("genre").custom((value, { req, res }) => {
+            if (value) {
+                if (typeof value != 'string') {
+                    throw new Error("Genre have to be string");
                 }
             }
             return true;
@@ -484,128 +431,91 @@ const validator = {
         }),
     ],
 
-
-
-    booksQuery: [
-        query("page").custom((value, { req, res }) => {
-            if (value) {
-                if (isNaN(Number(value))) {
-                    throw new Error("Page have to be a number");
+    updateBook: [
+        body("bookName")
+            .custom((value, { req, res }) => {
+                if (value) {
+                    if (!/^[A-Za-z]*[.]*[A-Za-z]*$/.test(value)) {
+                        throw new Error("Book name must contain only alphabetic characters (periods are optional)");
+                    } else if (value.length <= 0) {
+                        throw new Error("Book name cannot be blank");
+                    }
                 }
-            }
-            return true;
-        }),
-        query("limit").custom((value, { req, res }) => {
-            if (value) {
-                if (isNaN(Number(value))) {
-                    throw new Error("Limit have to be a number");
+                return true;
+            }),
+        body("description")
+            .custom((value, { req, res }) => {
+                if (value) {
+                    if (!/^[A-Za-z]*[.]*[A-Za-z]*$/.test(value)) {
+                        throw new Error("Book description must contain only alphabetic characters (periods are optional)");
+                    } else if (value.length < 30 && value.length>100) {
+                        throw new Error("Book description must be at between 30-100 characters long");
+                    }
                 }
-            }
-            return true;
-        }),
-
-        query("price").custom((value, { req, res }) => {
-            if (value) {
-                if (isNaN(Number(value))) {
-                    throw new Error("Price have to be a number");
+                return true;
+            }),
+        body("author")
+            .custom((value, { req, res }) => {
+                if (value) {
+                    if (!/^[A-Za-z]*[.]*[A-Za-z]*$/.test(value)) {
+                        throw new Error("Book author must contain only alphabetic characters (periods are optional)");
+                    } else if (value.length < 1 && value.length>50) {
+                        throw new Error("Book author must be at between 1-50 characters long");
+                    }
                 }
-            }
-            return true;
-        }),
-        query("rating").custom((value, { req, res }) => {
-            if (value) {
-                if (isNaN(Number(value))) {
-                    throw new Error("Rating have to be a number");
+                return true;
+            }),
+        body("genre")
+            .custom((value, { req, res }) => {
+                if (value) {
+                    if (!/^[A-Za-z]*[.]*[A-Za-z]*$/.test(value)) {
+                        throw new Error("Book genre must contain only alphabetic characters (periods are optional)");
+                    } else if (value.length < 1 && value.length>50) {
+                        throw new Error("Book genre must be at between 1-50 characters long");
+                    }
                 }
-            }
-            return true;
-        }),
-        query("discountPercentage").custom((value, { req, res }) => {
-            if (value) {
-                if (isNaN(Number(value))) {
-                    throw new Error("Discount Percentage have to be a number");
+                return true;
+            }),
+        body("price")
+            .custom((value, { req, res }) => {
+                if (value) {
+                    console.log("value of price",value);
+                    if (isNaN(value)) {
+                        throw new Error("Price have to be a number");
+                    }
+                    if(value !== undefined && value < 0) {
+                        throw new Error("Price can not be negative");
+                    }
                 }
-            }
-            return true;
-        }),
-        query("stock").custom((value, { req, res }) => {
-            if (value) {
-                if (isNaN(Number(value))) {
-                    throw new Error("Stock have to be a number");
+                return true;
+            }),
+        body("stockInc")
+            .custom((value, { req, res }) => {
+                if (value) {
+                    if (isNaN(value)) {
+                        throw new Error("StockInc have to be a number");
+                    }
+                    if(value !== undefined && value < 0) {
+                        throw new Error("StockInc value can not be negative");
+                    }
                 }
-            }
-            return true;
-        }),
-
-        query("priceCriteria").custom((value, { req, res }) => {
-            if (value) {
-                if (
-                    !(
-                        value === "gt" ||
-                        value === "gte" ||
-                        value === "lt" ||
-                        value === "lte" ||
-                        value === "eq" ||
-                        value === "ne"
-                    )
-                ) {
-                    throw new Error("Enter a criteria for price");
+                return true;
+            }),
+        body("stockDec")
+            .custom((value, { req, res }) => {
+                if (value) {
+                    if (isNaN(value)) {
+                        throw new Error("StockDec have to be a number");
+                    }
+                    if(value !== undefined && value < 0) {
+                        throw new Error("StockDec value can not be negative");
+                    }
                 }
-            }
-            return true;
-        }),
-        query("ratingCriteria").custom((value, { req, res }) => {
-            if (value) {
-                if (
-                    !(
-                        value === "gt" ||
-                        value === "gte" ||
-                        value === "lt" ||
-                        value === "lte" ||
-                        value === "eq" ||
-                        value === "ne"
-                    )
-                ) {
-                    throw new Error("Enter a criteria for rating");
-                }
-            }
-            return true;
-        }),
-        query("discountCriteria").custom((value, { req, res }) => {
-            if (value) {
-                if (
-                    !(
-                        value === "gt" ||
-                        value === "gte" ||
-                        value === "lt" ||
-                        value === "lte" ||
-                        value === "eq" ||
-                        value === "ne"
-                    )
-                ) {
-                    throw new Error("Enter a criteria for discount");
-                }
-            }
-            return true;
-        }),
-        query("stockCriteria").custom((value, { req, res }) => {
-            if (value) {
-                if (
-                    !(
-                        value === "gt" ||
-                        value === "gte" ||
-                        value === "lt" ||
-                        value === "lte" ||
-                        value === "eq" ||
-                        value === "ne"
-                    )
-                ) {
-                    throw new Error("Enter a criteria for stock");
-                }
-            }
-            return true;
-        }),
+                return true;
+            }),
     ],
+
+
 
     cart: [
         body("user").isString().withMessage("User has to be a string"),
@@ -655,11 +565,16 @@ const validator = {
             .isInt({ min: 1, max: 5 })
             .withMessage("Rating should be between 1 to 5"),
         body("review")
-            .isString()
-            .withMessage("Enter valid review")
-            .bail()
-            .isLength({ max: 100 })
-            .withMessage("Review can not exceed 100 character"),
+            .custom((value, { req, res }) => {
+                if (value) {
+                    if (!value || typeof value !== 'string' || value.trim().length === 0) {
+                        throw new Error("Review must be a non-empty string");
+                    } else if (value.length < 1 || value.length > 100) {
+                    throw new Error("Review must be between 1 and 100 characters long");
+                }
+                }
+                return true;
+            }),
     ],
 
     updateReview: [

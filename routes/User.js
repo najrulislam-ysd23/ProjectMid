@@ -5,10 +5,10 @@ const expressValidation = require("../middleware/ExpressValidator");
 const authValidation = require("../middleware/Auth");
 
 
-routes.get("/all", authValidation.isAuthorized, authValidation.isAdmin, expressValidation.getUsersQuery, UserController.getUsers);
-routes.get("/:id", authValidation.isAuthorized, UserController.getOneUser);
-routes.patch('/user/update', authValidation.isAuthorized, UserController.updateUser);
-routes.delete('/user/delete', authValidation.isAuthorized, authValidation.isAdmin, expressValidation.isValidEmail, UserController.deleteUser);
+routes.get("/all-user", authValidation.isAuthorized, authValidation.isAdmin, expressValidation.getUsersQuery, UserController.getUsers);
+routes.get("user/:id", authValidation.isAuthorized, UserController.getOneUser);
+routes.patch('/update-user', authValidation.isAuthorized, UserController.updateUser);
+routes.delete('/delete-user', authValidation.isAuthorized, authValidation.isAdmin, expressValidation.isValidEmail, UserController.deleteUser);
 
 
 

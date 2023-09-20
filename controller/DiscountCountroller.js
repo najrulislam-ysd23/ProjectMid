@@ -6,17 +6,15 @@ const { success, failure } = require("../util/common");
 const HTTP_STATUS = require("../constants/statusCodes");
 const logger = require("../middleware/logger");
 let logEntry;
-let routeAccess;
 
 
 class Discount {
     async addDiscount(req, res) {
-        routeAccess = '/discount/add-discount';
         try {
             const validation = validationResult(req).array();
             console.log(validation);
             if (validation.length > 0) {
-                logEntry = `${routeAccess} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: validation error | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.OK)
@@ -25,7 +23,7 @@ class Discount {
             let { book, discountPercentage, discountFrom, discountExp } = req.body;
             let bookRequested = await BookModel.findOne({ _id: book });
             if (!bookRequested) {
-                logEntry = `${routeAccess} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
+                logEntry = `${req.url} | status: invalid | timestamp: ${new Date().toLocaleString()}\n`;
                 logger.addLog(logEntry);
                 return res
                     .status(HTTP_STATUS.NOT_FOUND)
@@ -54,7 +52,7 @@ class Discount {
                 .save()
                 .then((data) => {
                     console.log(data);
-                    logEntry = `${routeAccess} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: success | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.OK)
@@ -62,7 +60,7 @@ class Discount {
                 })
                 .catch((err) => {
                     console.log(err);
-                    logEntry = `${routeAccess} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
+                    logEntry = `${req.url} | status: failure | timestamp: ${new Date().toLocaleString()}\n`;
                     logger.addLog(logEntry);
                     return res
                         .status(HTTP_STATUS.UNPROCESSABLE_ENTITY)
@@ -71,7 +69,7 @@ class Discount {
 
         } catch (error) {
             console.log(error);
-            logEntry = `${routeAccess} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
+            logEntry = `${req.url} | status: server error | timestamp: ${new Date().toLocaleString()}\n`;
             logger.addLog(logEntry);
             return res
                 .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
