@@ -1,0 +1,6 @@
+/auth/login | status: validation error | timestamp: 21:51:09 GMT+0600 (Bangladesh Standard Time)
+/auth/login | status: validation error | timestamp: 9/19/2023, 9:56:51 PM
+/login | status: login before verification | timestamp: 9/20/2023, 1:52:03 PM
+/login | status: success | timestamp: 9/20/2023, 1:52:19 PM
+/update-user | status: success | timestamp: 9/20/2023, 1:54:00 PM
+/login | status: success | timestamp: 9/20/2023, 1:54:17 PM
